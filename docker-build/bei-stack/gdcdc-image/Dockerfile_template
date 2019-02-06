@@ -1,0 +1,48 @@
+FROM debian:9
+
+# reminder, use {} around environmental variables, otherwise docker uses it as a literal
+
+LABEL edu.mda.bcb.name="GDCDownload" \
+      edu.mda.bcb.version="2018-01-26-1500" \
+      edu.mda.bcb.url="no url" \
+      edu.mda.bcb.log="/BEI/OUTPUT/<jobid>/DatasetConfig.log"
+
+# install JDK, apt utils
+RUN apt-get update && \
+    apt-get upgrade -f -y && \
+    apt-get install -f -y apt-utils readline-common procps curl && \
+    apt-get install -f -y openjdk-8-jdk && \
+    apt-get clean
+
+# create and setup docker_tcga use to mirror dqs_tcga_service account
+# also, set permissions and ownerships on internal docker directories
+# make and set ownership and permissions on internal image volume mount locations
+# must be done in one step, or could lock permissions in future images
+RUN mkdir /home/docker_tcga && \
+    useradd -l -s /bin/bash -d /home/docker_tcga -u <DOCKER_UID> docker_tcga && \
+    chown -R docker_tcga:docker_tcga /home/docker_tcga && \
+    mkdir -p /BEI/OUTPUT && \
+    chown -R docker_tcga:docker_tcga /BEI/OUTPUT && \
+    chmod -R u+rwx /BEI/OUTPUT
+
+# make subdirectory in user home for running
+# COPY is always done as root!!!!
+RUN mkdir /home/docker_tcga/gdcdownload && \
+    chown -R docker_tcga:docker_tcga /home/docker_tcga/gdcdownload && \
+    chmod -R u+rwx /home/docker_tcga/gdcdownload
+COPY installations /home/docker_tcga/gdcdownload
+RUN chown -R docker_tcga:docker_tcga /home/docker_tcga/gdcdownload && \
+    chmod -R u+rwx /home/docker_tcga/gdcdownload
+
+# switch from root to docker_tcga user
+USER docker_tcga
+
+# set working directory for future commands
+WORKDIR /home/docker_tcga/gdcdownload
+
+# start this image with this command, which runs GDCDownload every 2 minutes
+# docs for arguments to CMD runGDCDownload.bash, below
+# first argument, URL for beiService (see docker-compose file for service declaration) port is internal port declared in docker-compose
+# second argument, anything but 'once' means repeat forever
+CMD ["/bin/bash", "/home/docker_tcga/gdcdownload/runGDCDownload.bash", "http://beiService:8080", "forever"]
+

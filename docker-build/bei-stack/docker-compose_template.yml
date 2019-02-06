@@ -1,0 +1,118 @@
+# this is the docker-compose version
+version: '3.0'
+
+# file version 2018-05-22-1300
+
+
+networks:
+    # network for this compose stack
+    bei_network_<ENVIRON>:
+        driver: bridge
+        ipam:
+            config:
+            - subnet: <SUBNET>
+services:
+    # beiService runs tomcat with Batch Effects Interface and Batch Effects Viewer
+    beiService:
+        container_name: bei_cont_<ENVIRON>
+        # update :latest to desired version
+        image: <BEI-IMAGETXT>:<BEI-DESIREDTAG>
+        # restart this container if it crashes
+        restart: always
+        # build from sub-directory and Dockerfile
+        build:
+            context: ./bei-image
+            dockerfile: Dockerfile
+        networks:
+            - bei_network_<ENVIRON>
+        volumes:
+            # external:internal
+            # file with properties and job list for this installation
+            - <PROP-DIR>:/BEI/PROPS
+            # read-only directory with indexes to Standardized Data (TCGA and GDC) available for BEI
+            - <INDICES-DIR>:/BEI/INDICES:ro
+            # read-only directory to Standardized Data GDC
+            - <GDC-ARCHIVES-DIR>:/BEI/ARCHIVES/GDC:ro
+            # read-only directory to Standardized Data TCGA
+            - <STD-ARCHIVES-DIR>:/BEI/ARCHIVES/TCGA:ro
+            # directory for output from BEI, GDCDownload, and MBatch Results
+            - <JOB-OUTPUT-DIR>:/BEI/OUTPUT
+            # directories for GDC download info
+            - <GENOMICS-FILETO-DIR>:/BEI/GENOMICS/FILETO
+            - <GENOMICS-MAPS-DIR>:/BEI/GENOMICS/MAPS
+            # directory for the Batch Effects Website (must be on Linux file system since links to /BEI/OUTOUT are created here)
+            - <WEBSITE-DIR>:/BEI/WEBSITE
+            # read-only file to set time and timezone to same in image as on server
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/localtime:/etc/timezone:ro
+        ports:
+            # (outside)host port:container port(inside)
+            - "<BEI-PORT>:8080"
+        tty: true
+    gdcService:
+        container_name: gdc_cont_<ENVIRON>
+        # update :latest to desired version
+        image: <GDC-IMAGETXT>:<GDC-DESIREDTAG>
+        # restart this container if it crashes
+        restart: always
+        build:
+            # build from sub-directory and Dockerfile
+            context: ./gdcdc-image
+            dockerfile: Dockerfile
+        networks:
+            - bei_network_<ENVIRON>
+        volumes:
+            # directory for output from BEI, GDCDownload, and MBatch Results external:internal
+            - <JOB-OUTPUT-DIR>:/BEI/OUTPUT
+            # read-only file to set time and timezone to same in image as on server
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/localtime:/etc/timezone:ro
+        links:
+            # links required to talk to http://beiService:8080/
+            - beiService
+    mbatchService:
+        container_name: mbatch_cont_<ENVIRON>
+        # update :latest to desired version
+        image: <MBATCH-IMAGETXT>:<MBATCH-DESIREDTAG>
+        # restart this container if it crashes
+        restart: always
+        build:
+            # build from sub-directory and Dockerfile
+            context: ./mbatch-image
+            dockerfile: Dockerfile
+        networks:
+            - bei_network_<ENVIRON>
+        volumes:
+            # directory for output from BEI, GDCDownload, and MBatch Results external:internal
+            - <JOB-OUTPUT-DIR>:/BEI/OUTPUT
+            # directory for the Batch Effects Website (must be on Linux file system since links to /BEI/OUTOUT are created here)
+            - <WEBSITE-DIR>:/BEI/WEBSITE
+            # read-only file to set time and timezone to same in image as on server
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/localtime:/etc/timezone:ro
+        links:
+            # links required to talk to http://beiService:8080/
+            - beiService
+    bevService:
+        container_name: bev_cont_<ENVIRON>
+        # update :latest to desired version
+        image: <BEV-IMAGETXT>:<BEV-DESIREDTAG>
+        # restart this container if it crashes
+        restart: always
+        build:
+            # build from sub-directory and Dockerfile
+            context: ./bev-image
+            dockerfile: Dockerfile
+        networks:
+            - bei_network_<ENVIRON>
+        volumes:
+            # directory for output from BEI, GDCDownload, and MBatch Results external:internal
+            - <WEBSITE-DIR>:/BEV/IndexFiles
+            # directory for output from BEI, GDCDownload, and MBatch Results
+            - <JOB-OUTPUT-DIR>:/BEI/OUTPUT
+            # read-only file to set time and timezone to same in image as on server
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/localtime:/etc/timezone:ro
+        ports:
+            # (outside)host port:container port(inside)
+            - "<BEV-PORT>:8080"

@@ -1,0 +1,103 @@
+FROM debian:9
+
+# reminder, use {} around environmental variables, otherwise docker uses it as a literal
+
+LABEL edu.mda.bcb.name="BatchEffectsInterface" \
+      edu.mda.bcb.version="2018-01-26-1500" \
+      edu.mda.bcb.url="http://localhost:8888/BatchEffectsInterface/" \
+      edu.mda.bcb.url.other="http://localhost:8888/BatchEffects/" \
+      edu.mda.bcb.log="/usr/local/tomcat/logs/localhost.*.log"
+
+ENV TOMCAT_MAJOR=9 \
+    TOMCAT_VERSION=9.0.12 \
+    TOMCAT_HOME=/opt/tomcat \
+    CATALINA_HOME=/opt/tomcat \
+    CATALINA_OUT=/dev/null
+
+# install JDK, apt utils
+RUN apt-get update && \
+    apt-get upgrade -f -y && \
+    apt-get install -f -y apt-utils readline-common procps curl && \
+    apt-get install -f -y openjdk-8-jdk && \
+    apt-get clean
+
+# create and setup docker_tcga use to mirror dqs_tcga_service account
+# also, set permissions and ownerships on internal docker directories
+RUN mkdir /home/docker_tcga && \
+    useradd -l -s /bin/bash -d /home/docker_tcga -u <DOCKER_UID> docker_tcga && \
+    chown -R docker_tcga:docker_tcga /home/docker_tcga
+
+RUN curl -jksSL -o /tmp/apache-tomcat.tar.gz http://archive.apache.org/dist/tomcat/tomcat-${TOMCAT_MAJOR}/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz && \
+    gunzip /tmp/apache-tomcat.tar.gz && \
+    tar -C /opt -xf /tmp/apache-tomcat.tar && \
+    mv /opt/apache-tomcat-${TOMCAT_VERSION} ${TOMCAT_HOME} && \
+    rm -rf ${TOMCAT_HOME}/webapps/docs && \
+    rm -rf ${TOMCAT_HOME}/webapps/ROOT && \
+    rm -rf ${TOMCAT_HOME}/webapps/examples && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    chown -R docker_tcga:docker_tcga ${TOMCAT_HOME} && \
+    ln -s /opt/apache-tomcat-${TOMCAT_VERSION} ${TOMCAT_HOME} && \
+    apt-get clean
+
+# NOTE: for production/stage, skip tomcat-users.xml, manager-context.xml, and host-manager-context.xml
+# unless you want to enable tomcat user and management console
+# COPY is always done as root!!!!
+#COPY installations/tomcat-users.xml ${CATALINA_HOME}/conf/tomcat-users.xml
+#COPY installations/manager-context.xml ${CATALINA_HOME}/webapps/manager/META-INF/context.xml
+#COPY installations/host-manager-context.xml ${CATALINA_HOME}/webapps/host-manager/META-INF/context.xml
+#RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
+#    chmod -R u+rwx ${CATALINA_HOME}/conf
+#RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/webapps && \
+#    chmod -R u+rwx ${CATALINA_HOME}/webapps
+
+# copy server.xml to allow Active Directory Authentication
+# COPY is always done as root!!!!
+COPY installations/server.xml ${CATALINA_HOME}/conf/server.xml
+RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
+    chmod -R u+rwx ${CATALINA_HOME}/conf
+
+
+# copy installs
+# COPY is always done as root!!!!
+COPY installations/BatchEffectsInterface.war ${CATALINA_HOME}/webapps/BatchEffectsInterface.war
+RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/webapps && \
+    chmod -R u+rwx ${CATALINA_HOME}/webapps
+
+# make and set ownership and permissions on internal image volume mount locations
+# must be done in one step, or could lock permissions in future images
+RUN mkdir -p /BEI/INDICES && \
+    mkdir -p /BEI/ARCHIVES/GDC && \
+    mkdir -p /BEI/ARCHIVES/TCGA && \
+    mkdir -p /BEI/OUTPUT && \
+    mkdir -p /BEI/PROPS && \
+    mkdir -p /BEI/GENOMICS && \
+    mkdir -p /BEI/GENOMICS/FILETO && \
+    mkdir -p /BEI/GENOMICS/MAPS && \
+    mkdir -p /batcheffects && \
+    chown -R docker_tcga:docker_tcga /BEI && \
+    chown -R docker_tcga:docker_tcga /batcheffects && \
+    chmod -R u+rwx /BEI && \
+    chmod -R u+rwx /batcheffects
+
+# switch from root to docker_tcga user
+USER docker_tcga
+
+# declare internal volumes
+VOLUME /BEI/INDICES && \
+       /BEI/ARCHIVES/GDC && \
+       /BEI/ARCHIVES/TCGA && \
+       /BEI/OUTPUT && \
+       /BEI/PROPS && \
+       /batcheffects
+
+# make and set ownership and permissions on internal image volume mount locations
+RUN chown -R docker_tcga:docker_tcga /BEI && \
+    chown -R docker_tcga:docker_tcga /batcheffects && \
+    chmod -R u+rwx /BEI && \
+    chmod -R u+rwx /batcheffects
+
+RUN ls -l /BEI
+RUN ls -l /batcheffects
+
+USER docker_tcga
+CMD ["/opt/tomcat/bin/catalina.sh", "run"]

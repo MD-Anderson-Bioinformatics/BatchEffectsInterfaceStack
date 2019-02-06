@@ -1,0 +1,96 @@
+FROM debian:9
+
+# reminder, use {} around environmental variables, otherwise docker uses it as a literal
+
+LABEL edu.mda.bcb.name="BatchEffectsViewer" \
+      edu.mda.bcb.version="2018-11-20-1616" \
+      edu.mda.bcb.url="http://localhost:8080/BatchEffectsViewer/" \
+      edu.mda.bcb.log="/usr/local/tomcat/logs/localhost.*.log"
+
+ENV TOMCAT_MAJOR=9 \
+    TOMCAT_VERSION=9.0.12 \
+    TOMCAT_HOME=/opt/tomcat \
+    CATALINA_HOME=/opt/tomcat \
+    CATALINA_OUT=/dev/null
+
+# install JDK, apt utils
+RUN apt-get update && \
+    apt-get upgrade -f -y && \
+    apt-get install -f -y apt-utils readline-common procps curl && \
+    apt-get install -f -y openjdk-8-jdk && \
+    apt-get clean
+
+# create and setup docker_tcga use to mirror dqs_tcga_service account
+# also, set permissions and ownerships on internal docker directories
+RUN mkdir /home/docker_tcga && \
+    useradd -l -s /bin/bash -d /home/docker_tcga -u <USERID> docker_tcga && \
+    chown -R docker_tcga:docker_tcga /home/docker_tcga
+
+RUN curl -jksSL -o /tmp/apache-tomcat.tar.gz http://archive.apache.org/dist/tomcat/tomcat-${TOMCAT_MAJOR}/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz && \
+    gunzip /tmp/apache-tomcat.tar.gz && \
+    tar -C /opt -xf /tmp/apache-tomcat.tar && \
+    mv /opt/apache-tomcat-${TOMCAT_VERSION} ${TOMCAT_HOME} && \
+    rm -rf ${TOMCAT_HOME}/webapps/docs && \
+    rm -rf ${TOMCAT_HOME}/webapps/ROOT && \
+    rm -rf ${TOMCAT_HOME}/webapps/examples && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    chown -R docker_tcga:docker_tcga ${TOMCAT_HOME} && \
+    ln -s /opt/apache-tomcat-${TOMCAT_VERSION} ${TOMCAT_HOME} && \
+    apt-get clean
+
+# NOTE: for production/stage, skip tomcat-users.xml, manager-context.xml, and host-manager-context.xml
+# unless you want to enable tomcat user and management console
+# COPY is always done as root!!!!
+#COPY installations/tomcat-users.xml ${CATALINA_HOME}/conf/tomcat-users.xml
+#COPY installations/manager-context.xml ${CATALINA_HOME}/webapps/manager/META-INF/context.xml
+#COPY installations/host-manager-context.xml ${CATALINA_HOME}/webapps/host-manager/META-INF/context.xml
+#RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
+#    chmod -R u+rwx ${CATALINA_HOME}/conf
+#RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/webapps && \
+#    chmod -R u+rwx ${CATALINA_HOME}/webapps
+
+# copy server.xml to allow MDA Active Directory Authentication
+# COPY is always done as root!!!!
+#NOT NEEDED YET COPY installations/server.xml ${CATALINA_HOME}/conf/server.xml
+#NOT NEEDED YET COPY installations/context.xml ${CATALINA_HOME}/conf/context.xml
+RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
+    chmod -R u+rwx ${CATALINA_HOME}/conf
+
+# copy server.xml to start compression - may need to be merged with above later
+COPY installations/server.xml ${CATALINA_HOME}/conf/server.xml
+RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
+    chmod -R u+rwx ${CATALINA_HOME}/conf
+
+# copy installs
+# COPY is always done as root!!!!
+COPY installations/BatchEffectsViewer.war ${CATALINA_HOME}/webapps/BatchEffectsViewer.war
+RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/webapps && \
+    chmod -R u+rwx ${CATALINA_HOME}/webapps
+
+# make and set ownership and permissions on internal image volume mount locations
+# must be done in one step, or could lock permissions in future images
+RUN mkdir -p /BEV/IndexFiles && \
+    chown -R docker_tcga:docker_tcga /BEV && \
+    chmod -R u+rwx /BEV && \
+    mkdir -p /BEI/OUTPUT && \
+    chown -R docker_tcga:docker_tcga /BEI && \
+    chmod -R u+rwx /BEI
+
+# switch from root to docker_tcga user
+USER docker_tcga
+
+# declare internal volumes
+VOLUME /BEV/IndexFiles /BEI/OUTPUT
+
+# make and set ownership and permissions on internal image volume mount locations
+RUN chown -R docker_tcga:docker_tcga /BEV && \
+    chmod -R u+rwx /BEV && \
+    chown -R docker_tcga:docker_tcga /BEI && \
+    chmod -R u+rwx /BEI
+
+RUN ls -l /BEV/IndexFiles
+
+RUN ls -l /BEI/OUTPUT
+
+USER docker_tcga
+CMD ["/opt/tomcat/bin/catalina.sh", "run"]
