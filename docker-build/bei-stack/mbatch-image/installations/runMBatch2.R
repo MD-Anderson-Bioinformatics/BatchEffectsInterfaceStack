@@ -22,11 +22,15 @@ runStatus <- "success"
 tryCatch({
   dir.create(file.path("/BEI/OUTPUT", jobID, "MBatch", jobID), showWarnings=FALSE, recursive=TRUE)
   setwd(file.path("/BEI/OUTPUT", jobID, "MBatch", jobID))
+  mbatchDF <- readAsGenericDataframe(file.path("/BEI/OUTPUT/mbatch.tsv"))
   mbatchRunFromConfig(theConfigFile=file.path("/BEI/OUTPUT", jobID, "MBatchConfig.tsv"),
                       theOutputDir=file.path("/BEI/OUTPUT", jobID, "MBatch", jobID),
                       theNaStrings=c("null", "NA"),
 					  theShaidyMapGen="/home/docker_tcga/mbatch/ShaidyMapGen.jar",
-					  theShaidyMapGenJava="/usr/bin/java")
+					  theShaidyMapGenJava="/usr/bin/java",
+					  theNGCHMShaidyMem=mbatchDF$NGCHMShaidyMem, 
+					  thePCAMem=mbatchDF$PCAMem, 
+					  theBoxplotMem=mbatchDF$BoxplotMem)
 }, warning = function(war){
   message(paste("runMBatch2.R hit the Warning: ", war))
   runStatus <- "warning"

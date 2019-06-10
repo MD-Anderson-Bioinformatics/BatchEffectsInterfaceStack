@@ -4,7 +4,7 @@ FROM debian:9
 
 LABEL edu.mda.bcb.name="BatchEffectsViewer" \
       edu.mda.bcb.version="2018-11-20-1616" \
-      edu.mda.bcb.url="http://localhost:8080/BatchEffectsViewer/" \
+      edu.mda.bcb.url="/BatchEffectsViewer/" \
       edu.mda.bcb.log="/usr/local/tomcat/logs/localhost.*.log"
 
 ENV TOMCAT_MAJOR=9 \
@@ -20,7 +20,7 @@ RUN apt-get update && \
     apt-get install -f -y openjdk-8-jdk && \
     apt-get clean
 
-# create and setup docker_tcga use to mirror dqs_tcga_service account
+# create and setup docker_tcga use to external directory owner
 # also, set permissions and ownerships on internal docker directories
 RUN mkdir /home/docker_tcga && \
     useradd -l -s /bin/bash -d /home/docker_tcga -u <USERID> docker_tcga && \

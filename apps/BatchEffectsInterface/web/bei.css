@@ -263,7 +263,7 @@ input
 .tippy-tooltip.tooltipCSS-theme
 {
     position: absolute;
-        display: block;
+    display: block;
 	z-index: 1;
 	/*visibility: hidden;
 	transition: opacity .25s, visibilty .25s;
@@ -306,6 +306,10 @@ table.mbatchconfigInputTable>tr>td
 .largeInputAndSelect
 {
     width: 315px;
+}
+.veryWideInputAndSelect
+{
+    width: 730px;
 }
 
 .tail_scroll {

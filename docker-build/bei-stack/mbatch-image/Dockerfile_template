@@ -41,7 +41,7 @@ RUN echo 'deb http://cran.r-project.org/bin/linux/debian stretch-cran34/' >> /et
 # register Java 8 with R
 RUN R CMD javareconf
 
-# create and setup docker_tcga use to mirror dqs_tcga_service account
+# create and setup docker_tcga use to external directory owner
 # also, set permissions and ownerships on internal docker directories
 RUN mkdir /home/docker_tcga && \
     useradd -l -s /bin/bash -d /home/docker_tcga -u <USERID> docker_tcga && \
@@ -68,14 +68,16 @@ RUN chown -R docker_tcga:docker_tcga /home/docker_tcga && \
     chmod -R u+rwx /home/docker_tcga && \
     ls -l /home/docker_tcga/mbatch
 
+RUN Rscript /home/docker_tcga/mbatch/installNGCHM.R
+
 # perform R installs for packages, and install MBatch and MBatchUtils
 RUN Rscript /home/docker_tcga/mbatch/installForMBatch0.R && \
     Rscript /home/docker_tcga/mbatch/installForMBatch1.R && \
     Rscript /home/docker_tcga/mbatch/installForMBatch2.R && \
-    Rscript /home/docker_tcga/mbatch/installForMBatch3.R && \
-    cd /home/docker_tcga/mbatch && \
-    R CMD INSTALL tsvio_*.tar.gz && \
-    R CMD INSTALL NGCHM_*.tar.gz && \
+    Rscript /home/docker_tcga/mbatch/installForMBatch3.R
+
+# install MBatch and MBatchUtils separately from above, so can be installed without reperforming above
+RUN cd /home/docker_tcga/mbatch && \
     R CMD INSTALL MBatch_*.tar.gz && \
     R CMD INSTALL MBatchUtils_*.tar.gz
 
@@ -85,3 +87,4 @@ USER docker_tcga
 # set working directory for future commands
 WORKDIR /home/docker_tcga/mbatch
 CMD ["/bin/bash", "/home/docker_tcga/mbatch/runRproc.bash", "http://beiService:8080/"]
+

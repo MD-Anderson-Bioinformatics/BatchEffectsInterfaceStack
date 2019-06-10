@@ -5,19 +5,24 @@
  */
 package edu.mda.bioinfo.bei.servlets.job;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import edu.mda.bioinfo.bei.servlets.BEISTDDatasets;
 import edu.mda.bioinfo.bei.servlets.BEIServletMixin;
 import edu.mda.bioinfo.bei.status.JOB_STATUS;
 import edu.mda.bioinfo.bei.status.JobStatus;
+import edu.mda.bioinfo.bevindex.FileFindInZip;
+import edu.mda.bioinfo.bevindex.display.DisplayRun;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.TreeMap;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.io.FileUtils;
 
 /**
  *
@@ -40,11 +45,7 @@ public class JOBSTDData extends BEIServletMixin
 		File jobDir = new File(BEISTDDatasets.M_OUTPUT, jobId);
 		String source = request.getParameter("source");
 		log("passed in source is " + source);
-		String date = request.getParameter("date");
-		String program = request.getParameter("program");
-		String project = request.getParameter("project");
-		String workflow = request.getParameter("workflow");
-		String datatype = request.getParameter("datatype");
+		String dataname = request.getParameter("dataname");
 		// use isAlternate to conditionally construct StdDataInfo.tsv or StdDataInfo2.tsv 
 		File configFile = null;
 		if("YES".equals(isAlternate))
@@ -59,15 +60,7 @@ public class JOBSTDData extends BEIServletMixin
 		{
 			bw.write("source\t" + source);
 			bw.newLine();
-			bw.write("date\t" + date);
-			bw.newLine();
-			bw.write("program\t" + program);
-			bw.newLine();
-			bw.write("project\t" + project);
-			bw.newLine();
-			bw.write("workflow\t" + workflow);
-			bw.newLine();
-			bw.write("datatype\t" + datatype);
+			bw.write("dataname\t" + dataname);
 			bw.newLine();
 		}
 		String testSuccess  = copyStandardDataFile(configFile, isAlternate, this);
@@ -106,12 +99,8 @@ public class JOBSTDData extends BEIServletMixin
 	public static String copyStandardDataFile(File theConfigFile, String isAlternate, HttpServlet theServlet) throws IOException, Exception
 	{
 		// read config file (tab delimited data pairs)
-		String source = null;	//TCGA
-		String date = null;	//2016_07_28_1308
-		String program = null;	//gbm
-		String project = null;	//methylation
-		String workflow = null;	//humanmethylation450_level3
-		String datatype = null;	//Level_2
+		String source = null;	//index file name without .json
+		String dataname = null;	//path within index
 		for(String line : Files.readAllLines(theConfigFile.toPath()))
 		{
 			String [] splitted = line.split("\t", -1);
@@ -119,45 +108,45 @@ public class JOBSTDData extends BEIServletMixin
 			{
 				source = splitted[1];
 			}
-			else if ("date".equals(splitted[0]))
+			else if ("dataname".equals(splitted[0]))
 			{
-				date = splitted[1];
-			}
-			else if ("program".equals(splitted[0]))
-			{
-				program = splitted[1];
-			}
-			else if ("project".equals(splitted[0]))
-			{
-				project = splitted[1];
-			}
-			else if ("workflow".equals(splitted[0]))
-			{
-				workflow = splitted[1];
-			}
-			else if ("datatype".equals(splitted[0]))
-			{
-				datatype = splitted[1];
+				dataname = splitted[1];
 			}
 		}
-		if ((null==source)||(null==date)||(null==program)||(null==project)||(null==workflow)||(null==datatype))
+		if ((null==source)||(null==dataname))
 		{
 			throw new Exception("Configuration file did not provide full path to the data");
 		}	
-		File sourceDir = new File(new File(new File(new File(new File(new File(BEISTDDatasets.M_ARCHIVES, source), date), program), project), workflow), datatype);
-		theServlet.log("sourceDir=" + sourceDir);
+		//
+		theServlet.log("use M_INDICES:" + BEISTDDatasets.M_INDICES);
+		String indexFilename = source + ".json";
+		File indexFile = new File(BEISTDDatasets.M_INDICES, indexFilename);
+		GsonBuilder builder = new GsonBuilder();
+		builder.setPrettyPrinting();
+		Gson gson = builder.create();
+		String zipFile = null;
+		try (BufferedReader br = java.nio.file.Files.newBufferedReader(Paths.get(indexFile.getAbsolutePath()), Charset.availableCharsets().get("UTF-8")))
+		{
+			DisplayRun dr = gson.fromJson(br, DisplayRun.class);
+			TreeMap<String, String> dare = dr.dataRelations(source);
+			zipFile = dare.get(dataname);
+			if (null==zipFile)
+			{
+				throw new Exception("Zip file not found for " + source + " and " + dataname);
+			}
+		}
 		if ("YES".equals(isAlternate))
 		{
-			// copyFile rather than copyFiletoDirectory allows for renaming
-			FileUtils.copyFile(new File(sourceDir, "matrix_data.tsv"), new File(theConfigFile.getParentFile(), "matrix_data2.tsv"));
-			FileUtils.copyFile(new File(sourceDir, "batches.tsv"), new File(theConfigFile.getParentFile(), "batches2.tsv"));
+			FileFindInZip ffiz = new FileFindInZip();
+			ffiz.findAndCopy(Paths.get(zipFile), "matrix_data.tsv", new File(theConfigFile.getParentFile(), "matrix_data2.tsv"));
+			ffiz.findAndCopy(Paths.get(zipFile), "batches.tsv", new File(theConfigFile.getParentFile(), "batches2.tsv"));
 			return "Std Data Success";
-
 		}
 		else
 		{
-			FileUtils.copyFileToDirectory(new File(sourceDir, "matrix_data.tsv"), theConfigFile.getParentFile());
-			FileUtils.copyFileToDirectory(new File(sourceDir, "batches.tsv"), theConfigFile.getParentFile());
+			FileFindInZip ffiz = new FileFindInZip();
+			ffiz.findAndCopy(Paths.get(zipFile), "matrix_data.tsv", new File(theConfigFile.getParentFile(), "matrix_data.tsv"));
+			ffiz.findAndCopy(Paths.get(zipFile), "batches.tsv", new File(theConfigFile.getParentFile(), "batches.tsv"));
 			return "Std Data Success";
 		}
 	}

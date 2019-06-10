@@ -22,7 +22,7 @@ for( myStr in commandArgs() )
   }
 }
 
-
+runStatus <- "success"
 tryCatch({
 	if (file.exists(file.path("/BEI/OUTPUT", jobID, "MBatch", jobID, "MBATCH_SUCCESS.txt")))
 	{

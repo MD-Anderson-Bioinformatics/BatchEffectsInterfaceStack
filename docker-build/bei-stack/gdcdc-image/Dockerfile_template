@@ -14,7 +14,7 @@ RUN apt-get update && \
     apt-get install -f -y openjdk-8-jdk && \
     apt-get clean
 
-# create and setup docker_tcga use to mirror dqs_tcga_service account
+# create and setup docker_tcga use to external directory owner
 # also, set permissions and ownerships on internal docker directories
 # make and set ownership and permissions on internal image volume mount locations
 # must be done in one step, or could lock permissions in future images

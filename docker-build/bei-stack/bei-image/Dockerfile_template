@@ -21,7 +21,7 @@ RUN apt-get update && \
     apt-get install -f -y openjdk-8-jdk && \
     apt-get clean
 
-# create and setup docker_tcga use to mirror dqs_tcga_service account
+# create and setup docker_tcga use to external directory owner
 # also, set permissions and ownerships on internal docker directories
 RUN mkdir /home/docker_tcga && \
     useradd -l -s /bin/bash -d /home/docker_tcga -u <DOCKER_UID> docker_tcga && \
@@ -73,10 +73,12 @@ RUN mkdir -p /BEI/INDICES && \
     mkdir -p /BEI/GENOMICS && \
     mkdir -p /BEI/GENOMICS/FILETO && \
     mkdir -p /BEI/GENOMICS/MAPS && \
+    mkdir -p /SDB/DATA && \
     mkdir -p /batcheffects && \
     chown -R docker_tcga:docker_tcga /BEI && \
     chown -R docker_tcga:docker_tcga /batcheffects && \
     chmod -R u+rwx /BEI && \
+    chmod -R u+rwx /SDB && \
     chmod -R u+rwx /batcheffects
 
 # switch from root to docker_tcga user
