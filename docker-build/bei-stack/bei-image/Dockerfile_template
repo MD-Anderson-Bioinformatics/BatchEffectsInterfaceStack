@@ -52,7 +52,7 @@ RUN curl -jksSL -o /tmp/apache-tomcat.tar.gz http://archive.apache.org/dist/tomc
 
 # copy server.xml to allow Active Directory Authentication
 # COPY is always done as root!!!!
-COPY installations/server.xml ${CATALINA_HOME}/conf/server.xml
+#<REMOVE-FOR-LDAP>COPY installations/server.xml ${CATALINA_HOME}/conf/server.xml
 RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
     chmod -R u+rwx ${CATALINA_HOME}/conf
 

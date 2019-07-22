@@ -36,7 +36,7 @@ public class BEISTDDatasets extends BEIServletMixin
 	final public static String M_WEBSITE = "/BEI/WEBSITE";
 	public static String M_DATASET_JSON = null;
 	public static long M_TIMESTAMP = 0;
-	public static final String M_VERSION = "2019-05-23-0900";
+	public static final String M_VERSION = "2019-07-09-1000";
 
 	public BEISTDDatasets()
 	{

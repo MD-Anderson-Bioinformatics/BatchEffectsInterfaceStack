@@ -6,6 +6,11 @@ echo "2019-02-01-0940"
 BASEDIR=`pwd`
 
 cd ${BASEDIR}
+cd ../apps/SamplesValidation
+ant -f build.xml
+ls -l ./dist
+
+cd ${BASEDIR}
 cd ../apps/BatchEffectsInterface
 ant -f build.xml
 ls -l ./dist

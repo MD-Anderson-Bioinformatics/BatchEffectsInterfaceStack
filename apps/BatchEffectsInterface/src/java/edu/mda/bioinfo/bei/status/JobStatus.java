@@ -303,7 +303,7 @@ public class JobStatus
 		}
 		else if (theStatus.mStatus.startsWith("MBATCHRUN_"))
 		{
-			tailMe = new File(new File(BEISTDDatasets.M_OUTPUT, theJob), "mbatch.log");
+			tailMe = new File(new File(BEISTDDatasets.M_OUTPUT, theJob), "log.rLog");
 			if (!tailMe.exists())
 			{
 				tailMe = null;
