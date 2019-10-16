@@ -151,7 +151,8 @@
 
       <Host name="localhost"  appBase="webapps"
             unpackWARs="true" autoDeploy="true">
-
+		<!-- Remote IP Valve makes remote-ip in log use up from X-Forwarded-For header instead of the proxy's IP-->
+		<Valve className="org.apache.catalina.valves.RemoteIpValve" />
         <!-- SingleSignOn valve, share authentication between web applications
              Documentation at: /docs/config/valve.html -->
         <!--
@@ -162,8 +163,9 @@
              Documentation at: /docs/config/valve.html
              Note: The pattern used is equivalent to using pattern="common" -->
         <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
-               prefix="localhost_access_log" suffix=".txt"
-               pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+               prefix="localhost_access_log" suffix=".txt" maxDays="45"
+               pattern="%h | %u | %t | %r | %s | %b | %a | %A | %p | %S | %{X-Forwarded-For}i | %{User-Agent}i | %{Referer}i "/>
+			   <!-- remote-host | remote-user | date-time | request | HTTP-status-code | bytes-sent |  remote-ip | local-ip | local-port | user-session-ID | forwarded-header-value | user-agent | referer -->
 
       </Host>
     </Engine>
