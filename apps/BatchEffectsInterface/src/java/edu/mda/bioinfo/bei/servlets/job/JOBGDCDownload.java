@@ -1,24 +1,35 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 University of Texas MD Anderson Cancer Center
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// MD Anderson Cancer Center Bioinformatics on GitHub <https://github.com/MD-Anderson-Bioinformatics>
+// MD Anderson Cancer Center Bioinformatics at MDA <https://www.mdanderson.org/research/departments-labs-institutes/departments-divisions/bioinformatics-and-computational-biology.html>
+
 package edu.mda.bioinfo.bei.servlets.job;
 
-import edu.mda.bioinfo.bei.servlets.BEISTDDatasets;
+import edu.mda.bioinfo.bei.utils.BEIUtils;
 import edu.mda.bioinfo.bei.servlets.BEIServletMixin;
 import edu.mda.bioinfo.bei.status.JOB_STATUS;
 import edu.mda.bioinfo.bei.status.JobStatus;
 import java.io.File;
 import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.io.FileUtils;
 
 /**
  *
- * @author linux
+ * @author Tod-Casasent
  */
 @MultipartConfig
+@WebServlet(name = "JOBGDCDownload", urlPatterns =
+{
+	"/JOBGDCDownload"
+})
 public class JOBGDCDownload extends BEIServletMixin
 {
 	public JOBGDCDownload()
@@ -34,7 +45,7 @@ public class JOBGDCDownload extends BEIServletMixin
 		log("passed in jobId is " + jobId);
 		String isAlternate = request.getParameter("isAlternate");
 		log("passed in isAlternate is " + isAlternate);
-		File jobDir = new File(BEISTDDatasets.M_OUTPUT, jobId);
+		File jobDir = new File(BEIUtils.M_OUTPUT, jobId);
 		log("fileLocation is " + jobDir.getAbsolutePath());
 		////////////////////////////////////////////////////////////////////
 		String altStr = "PRI";
@@ -55,11 +66,9 @@ public class JOBGDCDownload extends BEIServletMixin
 				}
 			}
 		}
-		new File(secPriDir, "downloaded").mkdirs();
-		new File(secPriDir, "converted").mkdirs();
-		// copy HG38_Genes.tsv and fileto files to secPriDir
-		FileUtils.copyDirectory(new File(BEISTDDatasets.M_GENOMICS_FILETO), secPriDir);
-		FileUtils.copyDirectory(new File(BEISTDDatasets.M_GENOMICS_MAPS), secPriDir);
+		new File(secPriDir, "util").mkdirs();
+		// copy HG38_Genes.tsv to secPriDir
+		FileUtils.copyFile(new File(BEIUtils.M_UTILS, "HG38_Genes.tsv"), new File(new File(secPriDir, "util"), "HG38_Genes.tsv"));
 		//
 		File configFile = new File(secPriDir, "PROCESS.TXT");
 		configFile.createNewFile();

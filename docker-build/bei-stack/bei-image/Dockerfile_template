@@ -59,47 +59,33 @@ RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
 
 # copy installs
 # COPY is always done as root!!!!
-COPY installations/BatchEffectsInterface.war ${CATALINA_HOME}/webapps/BatchEffectsInterface.war
+COPY installations/*.war ${CATALINA_HOME}/webapps/.
 RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/webapps && \
     chmod -R u+rwx ${CATALINA_HOME}/webapps
 
 # make and set ownership and permissions on internal image volume mount locations
 # must be done in one step, or could lock permissions in future images
-RUN mkdir -p /BEI/INDICES && \
-    mkdir -p /BEI/ARCHIVES/GDC && \
-    mkdir -p /BEI/ARCHIVES/TCGA && \
-    mkdir -p /BEI/OUTPUT && \
+RUN mkdir -p /BEI/OUTPUT && \
     mkdir -p /BEI/PROPS && \
-    mkdir -p /BEI/GENOMICS && \
-    mkdir -p /BEI/GENOMICS/FILETO && \
-    mkdir -p /BEI/GENOMICS/MAPS && \
-    mkdir -p /SDB/DATA && \
-    mkdir -p /batcheffects && \
+    mkdir -p /BEI/UTILS && \
+    mkdir -p /BEI/WEBSITE && \
     chown -R docker_tcga:docker_tcga /BEI && \
-    chown -R docker_tcga:docker_tcga /batcheffects && \
-    chmod -R u+rwx /BEI && \
-    chmod -R u+rwx /SDB && \
-    chmod -R u+rwx /batcheffects
+    chmod -R u+rwx /BEI
 
 # switch from root to docker_tcga user
 USER docker_tcga
 
 # declare internal volumes
-VOLUME /BEI/INDICES && \
-       /BEI/ARCHIVES/GDC && \
-       /BEI/ARCHIVES/TCGA && \
-       /BEI/OUTPUT && \
+VOLUME /BEI/OUTPUT && \
        /BEI/PROPS && \
-       /batcheffects
+       /BEI/UTILS && \
+       /BEI/WEBSITE
 
 # make and set ownership and permissions on internal image volume mount locations
 RUN chown -R docker_tcga:docker_tcga /BEI && \
-    chown -R docker_tcga:docker_tcga /batcheffects && \
-    chmod -R u+rwx /BEI && \
-    chmod -R u+rwx /batcheffects
+    chmod -R u+rwx /BEI
 
-RUN ls -l /BEI
-RUN ls -l /batcheffects
+RUN ls -l /BEI/*
 
 USER docker_tcga
 CMD ["/opt/tomcat/bin/catalina.sh", "run"]

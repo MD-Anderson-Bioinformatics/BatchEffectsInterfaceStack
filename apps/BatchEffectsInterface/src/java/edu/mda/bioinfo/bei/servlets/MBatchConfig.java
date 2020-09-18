@@ -1,10 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 University of Texas MD Anderson Cancer Center
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// MD Anderson Cancer Center Bioinformatics on GitHub <https://github.com/MD-Anderson-Bioinformatics>
+// MD Anderson Cancer Center Bioinformatics at MDA <https://www.mdanderson.org/research/departments-labs-institutes/departments-divisions/bioinformatics-and-computational-biology.html>
+
 package edu.mda.bioinfo.bei.servlets;
 
+import edu.mda.bioinfo.bei.utils.BEIUtils;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -12,13 +19,19 @@ import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.List;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  *
- * @author linux
+ * @author Tod-Casasent
  */
+@WebServlet(name = "MBatchConfig", urlPatterns =
+{
+	"/MBatchConfig"
+})
 public class MBatchConfig extends BEIServletMixin
 {
 	public MBatchConfig()
@@ -36,8 +49,15 @@ public class MBatchConfig extends BEIServletMixin
 		// action options
 		boolean readOrInitFile = ("initialize".equals(action));
 		boolean writeFile = ("write".equals(action));
+		// configDesc	MutBatch
+		boolean isMutBatch = false;
+		String configDesc = request.getParameter("configDesc");
+		if ("MutBatch".equals(configDesc))
+		{
+			isMutBatch = true;
+		}
 		// get list of parameters and write them
-		File jobDir = new File(BEISTDDatasets.M_OUTPUT, jobId);
+		File jobDir = new File(BEIUtils.M_OUTPUT, jobId);
 		Enumeration<String> sEnum = request.getParameterNames();
 		while(sEnum.hasMoreElements())
 		{
@@ -50,17 +70,17 @@ public class MBatchConfig extends BEIServletMixin
 		{
 			if (!configFile.exists())
 			{
-				writeConfigFile(request, configFile);
+				writeConfigFile(request, configFile, isMutBatch, jobDir, jobId);
 			}
 		}
 		else if (true==writeFile)
 		{
-			writeConfigFile(request, configFile);
+			writeConfigFile(request, configFile, isMutBatch, jobDir, jobId);
 		}
 		readConfigFile(theBuffer, configFile);
 	}
 	
-	public void writeConfigFile(HttpServletRequest theRequest, File theConfigFile) throws IOException
+	public void writeConfigFile(HttpServletRequest theRequest, File theConfigFile, boolean theMutBatchFlag, File theJobDir, String theJobId) throws IOException
 	{
 		try(BufferedWriter bw = java.nio.file.Files.newBufferedWriter(Paths.get(theConfigFile.getAbsolutePath()), Charset.availableCharsets().get("UTF-8")))
 		{
@@ -119,6 +139,24 @@ public class MBatchConfig extends BEIServletMixin
 			{
 				bw.write("title\tBatch Effects Run from BEI");
 				bw.newLine();
+			}
+			File mafFiles = new File(theJobDir, "MUT_MAFS");
+			if (mafFiles.exists())
+			{
+				FileUtils.deleteDirectory(mafFiles);
+			}
+			if (true==theMutBatchFlag)
+			{
+				bw.write("mutBatchDataBaseDir\t" + mafFiles.getAbsolutePath());
+				bw.newLine();
+				bw.write("mutBatchExtractDir\t" + new File(theJobDir, "MUT_EXTRACT").getAbsolutePath());
+				bw.newLine();
+				bw.write("mutBatchOutputDir\t" + new File(new File(new File(theJobDir, "MBatch"), theJobId), "MutBatch").getAbsolutePath());
+				bw.newLine();
+				mafFiles.mkdirs();
+				// copyMutationsIfFileExists(File theSource, File theDataDir, File theMafDir, String theDestName) 
+				BEIUtils.copyMutationsIfFileExists(new File(theJobDir, "mutations.tsv"), new File(theJobDir, "batches.tsv"), new File(theJobDir, "PRI"), mafFiles, "mutations.tsv", "batches.tsv");
+				BEIUtils.copyMutationsIfFileExists(new File(theJobDir, "mutations2.tsv"), new File(theJobDir, "batches2.tsv"), new File(theJobDir, "SEC"), mafFiles, "mutations.tsv", "batches.tsv");
 			}
 		}
 	}

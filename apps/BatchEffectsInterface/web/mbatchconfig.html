@@ -1,10 +1,5 @@
 <!DOCTYPE html>
 <!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
-<!--
 Tooltip library https://atomiks.github.io/tippyjs/
 Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 -->
@@ -68,8 +63,12 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 				////////////////////////////////////////////////////////////////
 
 				// should be true or false, use "maybe" to indicate unitialized status
-				self.propUseStandardizedData = ko.observable("maybe");
-				self.propMaxDscThreads = ko.observable(null);
+				self.propMutBatchMem = ko.observable(null);
+				self.propMutBatchThreads = ko.observable(null);
+				self.propMutBatchPvalueCutoff = ko.observable(null);
+				self.propMutBatchZscoreCutoff = ko.observable(null);
+				//
+				self.propMaxDscThreads = ko.observable();
 				self.propMinBoxplotGeneCount = ko.observable(null);
 				self.propMaxDscGeneCount = ko.observable(null);
 				self.propFilterMinAllowed = ko.observable(null);
@@ -97,8 +96,18 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 					cache: false,
 					success: function (theJson)
 					{
-						self.propUseStandardizedData(
-								(null === theJson.useStandardizedData) ? self.propUseStandardizedData() : theJson.useStandardizedData
+						console.log("BEIproperties success");
+						self.propMutBatchMem(
+								(null === theJson.mutBatchMem) ? self.propMutBatchMem() : theJson.mutBatchMem
+								);
+						self.propMutBatchThreads(
+								(null === theJson.mutBatchThreads) ? self.propMutBatchThreads() : theJson.mutBatchThreads
+								);
+						self.propMutBatchPvalueCutoff(
+								(null === theJson.mutBatchPvalueCutoff) ? self.propMutBatchPvalueCutoff() : theJson.mutBatchPvalueCutoff
+								);
+						self.propMutBatchZscoreCutoff(
+								(null === theJson.mutBatchZscoreCutoff) ? self.propMutBatchZscoreCutoff() : theJson.mutBatchZscoreCutoff
 								);
 						self.propMaxDscThreads(
 								(null === theJson.maxDscThreads) ? self.propMaxDscThreads() : theJson.maxDscThreads
@@ -171,7 +180,7 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 				// *************************************************************
 
 				////////////////////////////////////////////////////////////////
-				//// Step 2: Select Batches and CDP option
+				//// Step 2a: Select Batches and CDP option
 				////////////////////////////////////////////////////////////////
 
 				//for(i=0; i<self.primaryBatchData().length; i++)
@@ -302,6 +311,37 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 				});
 
 				////////////////////////////////////////////////////////////////
+				//// Step 2b:
+				////////////////////////////////////////////////////////////////
+
+				self.mbatchMethodSelectValue = ko.observable("MBatch Continuous");
+				self.mbatchMethodSelectOptions = ko.observableArray(["MBatch Continuous", "MBatch Discrete", "MutBatch"]);
+
+				self.isReadyAndMBatchContinuous = ko.computed(function ()
+				{
+					return ( ("MBatch Continuous"===self.mbatchMethodSelectValue()) && (self.batchTypesForMBatch().length>0) );
+				});
+
+				self.isReadyAndMBatchDiscrete = ko.computed(function ()
+				{
+					return ( ("MBatch Discrete"===self.mbatchMethodSelectValue()) && (self.batchTypesForMBatch().length>0) );
+				});
+				
+				self.isReadyAndMutBatch = ko.computed(function ()
+				{
+					return ( ("MutBatch"===self.mbatchMethodSelectValue()) && (self.batchTypesForMBatch().length>0) );
+				});
+
+				////////////////////////////////////////////////////////////////
+				//// Step 3: MBatch Discrete and MutBatch
+				////////////////////////////////////////////////////////////////
+				
+				self.mutBatchMem = ko.observable(self.propMutBatchMem());
+				self.mutBatchThreads = ko.observable(self.propMutBatchThreads());
+				self.mutBatchPvalueCutoff = ko.observable(self.propMutBatchPvalueCutoff());
+				self.mutBatchZscoreCutoff = ko.observable(self.propMutBatchZscoreCutoff());
+
+				////////////////////////////////////////////////////////////////
 				//// Step 3: Select a Filter
 				////////////////////////////////////////////////////////////////
 
@@ -343,6 +383,15 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 					return batchDataObj;
 				}, self);
 
+				
+				self.resetDefaultStep3DM = function ()
+				{
+					self.mutBatchMem(self.propMutBatchMem());
+					self.mutBatchThreads(self.propMutBatchThreads());
+					self.mutBatchPvalueCutoff(self.propMutBatchPvalueCutoff());
+					self.mutBatchZscoreCutoff(self.propMutBatchZscoreCutoff());
+				};
+				
 				self.resetDefaultStep3 = function ()
 				{
 					self.filterMaxAllowed(self.propFilterMaxAllowed());
@@ -414,10 +463,9 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 					{
 						for (i = 0; i < myBatchData.length; i++)
 						{
-							if (self.sampleidBatchType() === myBatchData[i].mBatchType)
+							if (self.sampleidBatchType() !== myBatchData[i].mBatchType)
 							{
-								//console.log("Set sample");
-								return Object.keys(myBatchData[2].mBatches);
+								return Object.keys(myBatchData[i].mBatches);
 							}
 						}
 					}
@@ -435,10 +483,9 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 					{
 						for (i = 0; i < myBatchData.length; i++)
 						{
-							if (self.sampleidBatchType() === myBatchData[i].mBatchType)
+							if (self.sampleidBatchType() !== myBatchData[i].mBatchType)
 							{
-								//console.log("Set sample");
-								return Object.keys(myBatchData[2].mBatches);
+								return Object.keys(myBatchData[i].mBatches);
 							}
 						}
 					}
@@ -708,13 +755,23 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 						{
 							action: theAction,
 							jobId: self.jobId(),
+							configDesc: self.mbatchMethodSelectValue(),
 							sampleidBatchType: self.sampleidBatchType(),
 							batchTypesForMBatchArray: (self.batchTypesForMBatch().length === 0) ? 'null' : self.batchTypesForMBatch().toString(),
+							// mutbatch and discrete settings
+							// "MBatch Continuous", "MBatch Discrete", "MutBatch"
+							mutBatchFlag: ("MBatch Discrete"===self.mbatchMethodSelectValue())?"TRUE":"FALSE",
+							mutationsMutbatchFlag: ("MutBatch"===self.mbatchMethodSelectValue())?"TRUE":"FALSE",
+							mutBatchMem: self.mutBatchMem(),
+							mutBatchThreads: self.mutBatchThreads(),
+							mutBatchPvalueCutoff: self.mutBatchPvalueCutoff(),
+							mutBatchZscoreCutoff: self.mutBatchZscoreCutoff(),
+							// general filter settings
 							filterMaxValue: self.filterMaxValue(),
 							filterLogTransformFlag: self.filterLogTransformFlag(),
 							filteringBatchType: (undefined === self.filteringBatchType()) ? 'null' : self.filteringBatchType(),
 							filteringBatchesArray: (undefined === self.filteringBatchType()) || (self.filteringBatches().length === 0) ? 'null' : self.filteringBatches().toString(),
-							CDP_Flag: self.mbatchCDPFlag(),
+							CDP_Flag: ("MBatch Continuous"===self.mbatchMethodSelectValue())?self.mbatchCDPFlag():"FALSE",
 							selectedBatchToCorrect: self.selectedBatchToCorrect(),
 							selectedCorrection: ('none' === self.selectedCorrection()) ? 'null' : self.selectedCorrection(),
 							selectedCorrectionMinBatchSize: self.selectedCorrectionMinBatchSize(),
@@ -724,7 +781,7 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 							selectedDSCSeed: self.selectedDSCSeed(),
 							selectedDSCMaxGeneCount: self.selectedDSCMaxGeneCount(),
 							selectedBoxplotMaxGeneCount: self.selectedBoxplotMaxGeneCount(),
-							selectedNgchmFlag: self.selectedNgchmFlag(),
+							selectedNgchmFlag: ("MBatch Continuous"===self.mbatchMethodSelectValue())?self.selectedNgchmFlag():"FALSE",
 							// Some of these data arguments have inline conditional statements which make sure
 							// that all RBN/EBNplus arguments which are irrelevant to the selectedCorrection choice are set to 'NULL'
 							filterLogTransformFlag2: self.filterLogTransformFlag2(),
@@ -752,9 +809,22 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 						},
 						success: function (theJson)
 						{
+							console.log("MBatchConfig success");
+							if (notUN(theJson.configDesc))
+							{
+								self.mbatchMethodSelectValue(theJson.configDesc);
+							}
+							else
+							{
+								self.mbatchMethodSelectValue("MBatch Continuous");
+							}
 							self.sampleidBatchType(theJson.sampleidBatchType);
 							self.selectedCorrection(('null' === theJson.selectedCorrection) ? 'none' : theJson.selectedCorrection);
 							self.batchTypesForMBatch(('null' === theJson.batchTypesForMBatchArray) ? [] : theJson.batchTypesForMBatchArray);
+							self.mutBatchMem(theJson.mutBatchMem);
+							self.mutBatchThreads(theJson.mutBatchThreads);
+							self.mutBatchPvalueCutoff(theJson.mutBatchPvalueCutoff);
+							self.mutBatchZscoreCutoff(theJson.mutBatchZscoreCutoff);
 							self.filterMaxValue(theJson.filterMaxValue);
 							console.log("ajaxMBatchConfig::success self.filterLogTransformFlag() = " + self.filterLogTransformFlag());
 							self.filterLogTransformFlag((('true' === theJson.filterLogTransformFlag)||('TRUE' === theJson.filterLogTransformFlag)) ? true : false);
@@ -860,7 +930,7 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 			<span class="mdaServiceHeaderTitle">
 				Batch Effects Interface
 				<span class="mdaServiceHeaderTitle" style="margin: 0; padding: 0;" data-bind="text:$root.serverTitle()"></span>
-				<small>2019-10-15-1100</small>
+				<small>2020-09-11-1000</small>
 				<small style="float: right;">
 					<a href="MBatch_04-99_Statistics.html" target="_blank">Statistics</a>
 					/
@@ -886,9 +956,9 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 		<hr>
 		<div class="roundedBox">
 			<!-- *************************************************************** -->
-			<!-- **** Step 2: Select Batches *********************************** -->
+			<!-- **** Step 2a: Select Batches *********************************** -->
 			<!-- *************************************************************** -->
-			<strong>Step 2: Select Batches</strong>
+			<strong>Step 2a: Select Batches</strong>
 			<div style="float: right;">
 				<button data-bind="click: function(data, event) { $root.resetDefaultStep2(); }" class="buttons">Reset Defaults</button>
 			</div>
@@ -939,7 +1009,110 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 				</div>
 			</div>
 		</div>
-		<div data-bind="visible: $root.batchTypesForMBatch().length>0">
+		
+		<div class="roundedBox">
+			<!-- *************************************************************** -->
+			<!-- **** Step 2b: Select MBatch Method *********************************** -->
+			<!-- *************************************************************** -->
+			<strong>Step 2b: Select MBatch Method</strong>
+			<div class="marginLeft10px">
+				<div>Select MBatch Method:
+					<select class="largeInputAndSelect" id="mbatchMethodSelect" 
+							data-bind="value: $root.mbatchMethodSelectValue, options: $root.mbatchMethodSelectOptions"></select>
+					<span class="tooltip">
+						<img id="tooltipImage_mbatchMethodSelect" src="images/Tooltip_icon.png" title="MBatch Methods" 
+							 data-theme="myTooltipTheme" class="guiIconDimensions" alt="More Info">
+						<span id="tooltipContent_mbatchMethodSelect" class="tooltiptext">
+							MBatch Methods <br><br>
+							Run MBatch Continuous (normal MBatch for continuous data), or MBatch Discrete (for discrete data), or MutBatch (for comparing multiple MAF files).
+						</span>
+					</span>
+				</div>
+			</div>
+		</div>
+
+		<div data-bind="visible: $root.isReadyAndMBatchDiscrete()||$root.isReadyAndMutBatch()">
+			<!-- *************************************************************** -->
+			<!-- **** Step 3: Select Discrete/MutBatch Options ************************* -->
+			<!-- *************************************************************** -->
+			<div class="roundedBox">
+				<strong>Step 3: Select Discrete/MutBatch Options</strong>
+				<div style="float: right;">
+					<button data-bind="click: function(data, event) { $root.resetDefaultStep3DM(); }" class="buttons">Reset Defaults</button>
+				</div>
+				<div>
+					<table class="mbatchconfigInputTable">
+						<tr>
+							<td style="text-align: left;">
+								Memory for Discrete/MutBatch Processing:
+							</td>
+							<td>
+								<select class="largeInputAndSelect" data-bind="value: $root.mutBatchMem">
+									<option value="1000m">1000m</option>
+									<option value="8000m">8000m</option>
+									<option value="12000m">12,000m</option>
+									<option value="16000m">16,000m</option>
+									<option value="20000m">20,000m</option>
+									<option value="24000m">24,000m</option>
+									<option value="32000m">32,000m</option>
+								</select>
+								<span class="tooltip">
+									<img id="tooltipImage_MutBatchMem" title="Memory for Discrete/MutBatch Processing" data-theme="myTooltipTheme" src="images/Tooltip_icon.png" alt="More Info" class="guiIconDimensions">
+									<span id="tooltipContent_MutBatchMem" class="tooltiptext">Memory for Discrete/MutBatch Processing:<br><br>
+										Memory for Discrete/MutBatch Processing, argument to Java, used to perform Discrete/MutBatch calculations. 
+										Commas are only used for display legibility purposes.
+										Generally, use the default value.</span>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align: left;">
+								Number of Discrete/MutBatch Threads (1-<span data-bind="text: $root.maxDscThreads"></span>):
+							</td>
+							<td>
+								<input class="smallInputAndSelect" type="number" min="1" data-bind="value: $root.mutBatchThreads, attr: { max: $root.maxDscThreads }" />
+								<span class="tooltip">
+									<img id="tooltipImage_DiscreteMutBatchThreads" title="Number of Discrete/MutBatch Threads" data-theme="myTooltipTheme" src="images/Tooltip_icon.png" alt="More Info" class="guiIconDimensions">
+									<span id="tooltipContent_DiscreteMutBatchThreads" class="tooltiptext">Number of Discrete/MutBatch Threads:<br><br>
+										Number of threads (usually equal to the desired number of cores) used to perform Discrete/MutBatch calculations. 
+										Generally, use the default value.</span>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align: left;">
+								P-Value Cutoff for Significance:
+							</td>
+							<td>
+								<input class="smallInputAndSelect" type="number" step="0.00001" data-bind="value: $root.mutBatchPvalueCutoff" />
+								<span class="tooltip">
+									<img id="tooltipImage_MutBatchPvalueCutoff" title="Number of Discrete/MutBatch Threads" data-theme="myTooltipTheme" src="images/Tooltip_icon.png" alt="More Info" class="guiIconDimensions">
+									<span id="tooltipContent_MutBatchPvalueCutoff" class="tooltiptext">P-Value Cutoff for Significance:<br><br>
+										P-value to use for cutoff for "significant" difference in Kruskal-Wallis and Dunn's tests.
+										Generally, use the default value.</span>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="text-align: left;">
+								Z-Score Cutoff for Significance:
+							</td>
+							<td>
+								<input class="smallInputAndSelect" type="number" step="0.01" data-bind="value: $root.mutBatchZscoreCutoff" />
+								<span class="tooltip">
+									<img id="tooltipImage_MutBatchZscoreCutoff" title="Z-Score Cutoff for Significance" data-theme="myTooltipTheme" src="images/Tooltip_icon.png" alt="More Info" class="guiIconDimensions">
+									<span id="tooltipContent_MutBatchZscoreCutoff" class="tooltiptext">Z-Score Cutoff for Significance:<br><br>
+										Z-score cut off for Dunn's test for "significant" confidence interval.
+										Generally, use the default value.</span>
+								</span>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+		
+		<div data-bind="visible: $root.isReadyAndMBatchContinuous()">
 			<!-- *************************************************************** -->
 			<!-- **** Step 3: Select Filtering Options ************************* -->
 			<!-- *************************************************************** -->
@@ -953,7 +1126,38 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 					<div class="tooltip inlineblock">
 						<img id="tooltipImage_LogTransform" title="Select Filtering Options" data-theme="myTooltipTheme" src="images/Tooltip_icon.png" class="guiIconDimensions" alt="More Info">
 						<div id="tooltipContent_LogTransform" class="tooltiptext">Log Transform Data:<br><br>
-							Log transform data using .1 percentile, after removing zeros and NAs, to add before logging.</div>
+							Log transform data using .1 percentile, after removing zeros and NAs, to add before logging.
+							Breakdown of known GDC platforms and transformation recommendations.
+							<table>
+								<tr><td>GISTIC</td><td>log transform</td></tr>
+								<tr><td>MuSE</td><td>log transform</td></tr>
+								<tr><td>MuTect2</td><td>log transform</td></tr>
+								<tr><td>RNASeq-Counts</td><td>log transform</td></tr>
+								<tr><td>RNASeq-fpkm</td><td>log transform</td></tr>
+								<tr><td>RNASeq-fpkmuq</td><td>log transform</td></tr>
+								<tr><td>SNP6-noconv-noXY</td><td>no post processing</td></tr>
+								<tr><td>SomaticSniper</td><td>log transform</td></tr>
+								<tr><td>VarScan2</td><td>log transform</td></tr>
+								<tr><td>methylation</td><td>no post processing</td></tr>
+								<tr><td>methylation-noXY</td><td>no post processing</td></tr>
+								<tr><td>miRNA-gene</td><td>log transform</td></tr>
+								<tr><td>miRNA-isoform</td><td>log transform</td></tr>
+								<tr><td>RNASeq-v1-gene</td><td>log transformed</td></tr>
+								<tr><td>RNASeq-v2-gene</td><td>log transformed</td></tr>
+								<tr><td>RNASeq-v2-isoform</td><td>log transformed</td></tr>
+								<tr><td>RPPA</td><td>No Post Processing</td></tr>
+								<tr><td>SNP6-nocnv-noXY</td><td>No Post Processing</td></tr>
+								<tr><td>methylation</td><td>No Post Processing</td></tr>
+								<tr><td>methylation-noXY</td><td>No Post Processing</td></tr>
+								<tr><td>miRNA-gene</td><td>log transform</td></tr>
+								<tr><td>miRNA-isoform</td><td>log transformed</td></tr>
+								<tr><td>mutations-illuminaga-gsc</td><td>log transform</td></tr>
+								<tr><td>mutations-illuminaga-hgsc</td><td>log transform</td></tr>
+								<tr><td>mutations-illuminaga-ucsc</td><td>log transform</td></tr>
+								<tr><td>mutations-illuminahiseq-bcgsc</td><td>log transform</td></tr>
+								<tr><td>mutations-illuminahiseq-wustl</td><td>log transform</td></tr>
+							</table>
+						</div>
 					</div>
 				</div>
 				<div class="marginLeft10px">Auto-Filter to Maximum Number of Values:

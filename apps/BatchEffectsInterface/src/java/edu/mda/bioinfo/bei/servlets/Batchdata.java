@@ -1,10 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 University of Texas MD Anderson Cancer Center
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// MD Anderson Cancer Center Bioinformatics on GitHub <https://github.com/MD-Anderson-Bioinformatics>
+// MD Anderson Cancer Center Bioinformatics at MDA <https://www.mdanderson.org/research/departments-labs-institutes/departments-divisions/bioinformatics-and-computational-biology.html>
+
 package edu.mda.bioinfo.bei.servlets;
 
+import edu.mda.bioinfo.bei.utils.BEIUtils;
 import edu.mda.bioinfo.bei.processes.BatchdataObj;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,12 +22,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.TreeMap;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 
 /**
  *
- * @author linux
+ * @author Tod-Casasent
  */
+@WebServlet(name = "Batchdata", urlPatterns =
+{
+	"/Batchdata"
+})
 public class Batchdata extends BEIServletMixin
 {
 	public Batchdata()
@@ -37,7 +49,7 @@ public class Batchdata extends BEIServletMixin
 		// NO, YES, YES-IGNORE
 		log("passed in isAlternate is " + isAlternate);
 		boolean isAltFlag = isAlternate.startsWith("YES");
-		Collection<BatchdataObj> batches = loadBatchdata((new File(BEISTDDatasets.M_OUTPUT, jobId)), isAltFlag);
+		Collection<BatchdataObj> batches = loadBatchdata((new File(BEIUtils.M_OUTPUT, jobId)), isAltFlag);
 		GsonBuilder builder = new GsonBuilder();
 		Gson gson = builder.create();
 		String json = gson.toJson(batches);

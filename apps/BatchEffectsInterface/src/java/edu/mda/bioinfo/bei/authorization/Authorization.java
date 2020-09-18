@@ -1,12 +1,18 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 University of Texas MD Anderson Cancer Center
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// MD Anderson Cancer Center Bioinformatics on GitHub <https://github.com/MD-Anderson-Bioinformatics>
+// MD Anderson Cancer Center Bioinformatics at MDA <https://www.mdanderson.org/research/departments-labs-institutes/departments-divisions/bioinformatics-and-computational-biology.html>
+
 package edu.mda.bioinfo.bei.authorization;
 
 import edu.mda.bioinfo.bei.servlets.AuthUpdate;
-import edu.mda.bioinfo.bei.servlets.BEISTDDatasets;
+import edu.mda.bioinfo.bei.utils.BEIUtils;
 import edu.mda.bioinfo.bei.servlets.BEIproperties;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,7 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  *
- * @author linux
+ * @author Tod-Casasent
  */
 public class Authorization
 {
@@ -113,7 +119,7 @@ public class Authorization
 			}
 			if (BEIproperties.isLoginAllowed(theServlet))
 			{
-				//theServlet.log("removeAuthorizationData version = " + edu.mda.bioinfo.bei.servlets.BEISTDDatasets.M_VERSION);
+				//theServlet.log("removeAuthorizationData version = " + edu.mda.bioinfo.bei.servlets.BEIUtils.M_VERSION);
 				// update maps with new information
 				mJobsToUsers.remove(theJobId+ ".USERS");
 				mJobsToRoles.remove(theJobId+ ".ROLES");
@@ -131,7 +137,7 @@ public class Authorization
 				{
 					props.setProperty(myData.getKey()+ ".OWNER", myData.getValue());
 				}
-				try (FileOutputStream os = new FileOutputStream(new File(BEISTDDatasets.M_PROPS, "auth.properties")))
+				try (FileOutputStream os = new FileOutputStream(new File(BEIUtils.M_PROPS, "auth.properties")))
 				{
 					props.storeToXML(os, "authorization properties");
 				}
@@ -156,7 +162,7 @@ public class Authorization
 			}
 			if (BEIproperties.isLoginAllowed(theServlet))
 			{
-				//theServlet.log("updateAuthorizationData version = " + edu.mda.bioinfo.bei.servlets.BEISTDDatasets.M_VERSION);
+				//theServlet.log("updateAuthorizationData version = " + edu.mda.bioinfo.bei.servlets.BEIUtils.M_VERSION);
 				//theServlet.log("theJobId = " + theJobId);
 				long start = System.currentTimeMillis();
 				// update maps with new information
@@ -177,7 +183,7 @@ public class Authorization
 				{
 					props.setProperty(myData.getKey()+ ".OWNER", myData.getValue());
 				}
-				try (FileOutputStream os = new FileOutputStream(new File(BEISTDDatasets.M_PROPS, "auth.properties")))
+				try (FileOutputStream os = new FileOutputStream(new File(BEIUtils.M_PROPS, "auth.properties")))
 				{
 					props.storeToXML(os, "authorization properties");
 				}
@@ -214,11 +220,11 @@ public class Authorization
 	{
 		if (BEIproperties.isLoginAllowed(theServlet))
 		{
-			//theServlet.log("readAuthorizationData version = " + edu.mda.bioinfo.bei.servlets.BEISTDDatasets.M_VERSION);
+			//theServlet.log("readAuthorizationData version = " + edu.mda.bioinfo.bei.servlets.BEIUtils.M_VERSION);
 			long start = System.currentTimeMillis();
 			Properties props = new Properties();
 			//authorization properties
-			try (FileInputStream is = new FileInputStream(new File(BEISTDDatasets.M_PROPS, "auth.properties")))
+			try (FileInputStream is = new FileInputStream(new File(BEIUtils.M_PROPS, "auth.properties")))
 			{
 				props.loadFromXML(is);
 			}
@@ -242,7 +248,7 @@ public class Authorization
 		
 	synchronized static public void userHasAccessException(HttpServlet theServlet, HttpServletRequest theRequest, String theJobId) throws IOException, Exception
 	{
-		//theServlet.log("userHasAccessException version = " + edu.mda.bioinfo.bei.servlets.BEISTDDatasets.M_VERSION);
+		//theServlet.log("userHasAccessException version = " + edu.mda.bioinfo.bei.servlets.BEIUtils.M_VERSION);
 		if (false==mIsRead)
 		{
 			readAuthorizationData(theServlet);
@@ -266,7 +272,7 @@ public class Authorization
 	
 	synchronized static public boolean userHasAccess(HttpServlet theServlet, String theJobId, String theUser, TreeSet<String> theUserRoles) throws IOException
 	{
-		//theServlet.log("userHasAccess version = " + edu.mda.bioinfo.bei.servlets.BEISTDDatasets.M_VERSION);
+		//theServlet.log("userHasAccess version = " + edu.mda.bioinfo.bei.servlets.BEIUtils.M_VERSION);
 		boolean grant = false;
 		if (BEIproperties.isLoginAllowed(theServlet))
 		{

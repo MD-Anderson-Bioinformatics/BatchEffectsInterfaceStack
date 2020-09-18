@@ -63,7 +63,7 @@ RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
 
 # copy installs
 # COPY is always done as root!!!!
-COPY installations/BatchEffectsViewer.war ${CATALINA_HOME}/webapps/BatchEffectsViewer.war
+COPY installations/*.war ${CATALINA_HOME}/webapps/.
 RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/webapps && \
     chmod -R u+rwx ${CATALINA_HOME}/webapps
 

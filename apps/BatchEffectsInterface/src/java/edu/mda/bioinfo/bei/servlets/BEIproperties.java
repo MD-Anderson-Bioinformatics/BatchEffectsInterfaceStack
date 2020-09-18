@@ -1,10 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 University of Texas MD Anderson Cancer Center
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// MD Anderson Cancer Center Bioinformatics on GitHub <https://github.com/MD-Anderson-Bioinformatics>
+// MD Anderson Cancer Center Bioinformatics at MDA <https://www.mdanderson.org/research/departments-labs-institutes/departments-divisions/bioinformatics-and-computational-biology.html>
+
 package edu.mda.bioinfo.bei.servlets;
 
+import edu.mda.bioinfo.bei.utils.BEIUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,9 +23,12 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  *
- * @author linux
+ * @author Tod-Casasent
  */
-@WebServlet(loadOnStartup=1)
+@WebServlet(name = "BEIproperties", urlPatterns =
+{
+	"/BEIproperties"
+}, loadOnStartup=1)
 public class BEIproperties extends BEIServletMixin
 {
 	static private String M_PROPERTIES_JSON = null;
@@ -68,7 +78,7 @@ public class BEIproperties extends BEIServletMixin
 			((null!=M_PROPERTIES_JSON)&&((M_TIMESTAMP-System.currentTimeMillis())>(1000*60*60))))
 		{
 			M_PROPERTIES = new Properties();
-			try (FileInputStream is = new FileInputStream(new File(BEISTDDatasets.M_PROPS, "bei.properties")))
+			try (FileInputStream is = new FileInputStream(new File(BEIUtils.M_PROPS, "bei.properties")))
 			{
 				M_PROPERTIES.loadFromXML(is);
 			}
@@ -82,6 +92,7 @@ public class BEIproperties extends BEIServletMixin
 					out.append(",");
 				}
 				out.append("\n\"" + name + "\":\"" + M_PROPERTIES.getProperty(name) + "\"");
+				theServlet.log("BEIproperties " + name + "=" + M_PROPERTIES.getProperty(name));
 				wrote = true;
 			}
 			out.append("\n}\n");

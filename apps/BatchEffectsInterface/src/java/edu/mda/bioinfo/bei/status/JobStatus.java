@@ -1,14 +1,20 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 University of Texas MD Anderson Cancer Center
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// MD Anderson Cancer Center Bioinformatics on GitHub <https://github.com/MD-Anderson-Bioinformatics>
+// MD Anderson Cancer Center Bioinformatics at MDA <https://www.mdanderson.org/research/departments-labs-institutes/departments-divisions/bioinformatics-and-computational-biology.html>
+
 package edu.mda.bioinfo.bei.status;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import edu.mda.bioinfo.bei.authorization.Authorization;
-import edu.mda.bioinfo.bei.servlets.BEISTDDatasets;
+import edu.mda.bioinfo.bei.utils.BEIUtils;
 import edu.mda.bioinfo.bei.servlets.BEIproperties;
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,10 +27,8 @@ import java.util.TreeSet;
 import javax.servlet.http.HttpServletRequest;
 import java.io.StringWriter;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashMap;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServlet;
@@ -32,7 +36,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  *
- * @author linux
+ * @author Tod-Casasent
  */
 public class JobStatus
 {
@@ -45,7 +49,7 @@ public class JobStatus
 		//if (null==M_JOB_STATUS)
 		{
 			M_JOB_STATUS = new Properties();
-			File myfile = new File(BEISTDDatasets.M_PROPS, "job.properties");
+			File myfile = new File(BEIUtils.M_PROPS, "job.properties");
 			if (myfile.exists())
 			{
 				try (FileInputStream is = new FileInputStream(myfile))
@@ -60,7 +64,7 @@ public class JobStatus
 	{
 		if (null != M_JOB_STATUS)
 		{
-			try (FileOutputStream os = new FileOutputStream(new File(BEISTDDatasets.M_PROPS, "job.properties")))
+			try (FileOutputStream os = new FileOutputStream(new File(BEIUtils.M_PROPS, "job.properties")))
 			{
 				M_JOB_STATUS.storeToXML(os, "job status");
 			}
@@ -283,10 +287,10 @@ public class JobStatus
 		File tailMe = null;
 		if (theStatus.mStatus.startsWith("NEWJOB_"))
 		{
-			tailMe = new File(new File(BEISTDDatasets.M_OUTPUT, theJob), "DatasetConfig2.log");
+			tailMe = new File(new File(BEIUtils.M_OUTPUT, theJob), "DatasetConfig2.log");
 			if (!tailMe.exists())
 			{
-				tailMe = new File(new File(BEISTDDatasets.M_OUTPUT, theJob), "DatasetConfig.log");
+				tailMe = new File(new File(BEIUtils.M_OUTPUT, theJob), "DatasetConfig.log");
 				if (!tailMe.exists())
 				{
 					tailMe = null;
@@ -295,7 +299,7 @@ public class JobStatus
 		}
 		else if (theStatus.mStatus.startsWith("MBATCHCONFIG_"))
 		{
-			tailMe = new File(new File(BEISTDDatasets.M_OUTPUT, theJob), "MBatchConfig_err.log");
+			tailMe = new File(new File(BEIUtils.M_OUTPUT, theJob), "MBatchConfig_err.log");
 			if (!tailMe.exists())
 			{
 				tailMe = null;
@@ -303,7 +307,7 @@ public class JobStatus
 		}
 		else if (theStatus.mStatus.startsWith("MBATCHRUN_"))
 		{
-			tailMe = new File(new File(BEISTDDatasets.M_OUTPUT, theJob), "log.rLog");
+			tailMe = new File(new File(BEIUtils.M_OUTPUT, theJob), "log.rLog");
 			if (!tailMe.exists())
 			{
 				tailMe = null;
@@ -319,7 +323,7 @@ public class JobStatus
 				moreLogs.add("");
 				moreLogs.add(tailMe.getAbsolutePath());
 				moreLogs.addAll(Arrays.asList(FileTail.tail(tailMe.getAbsolutePath(), 100)));
-				File[] logs = new File(BEISTDDatasets.M_OUTPUT, theJob).listFiles(new FilenameFilter()
+				File[] logs = new File(BEIUtils.M_OUTPUT, theJob).listFiles(new FilenameFilter()
 				{
 					@Override
 					public boolean accept(File dir, String name)
@@ -370,16 +374,27 @@ public class JobStatus
 		String level3 = null;
 		String level4 = null;
 		String level5 = null;
-		// check for PCA directory and batch dir
-		level3 = getFirstDir(new File(new File(theResultDir, level1), level2));
-		if (null==level3)
+		try
 		{
-			// if no PCA, redo level 2 and 3
-			level2 = getFirstDir(new File(theResultDir, level1));
+			// check for PCA directory and batch dir
 			level3 = getFirstDir(new File(new File(theResultDir, level1), level2));
+			if (null==level3)
+			{
+				// if no PCA, redo level 2 and 3
+				level2 = getFirstDir(new File(theResultDir, level1));
+				level3 = getFirstDir(new File(new File(theResultDir, level1), level2));
+			}
+			level4 = getFirstDir(new File(new File(new File(theResultDir, level1), level2), level3));
+			level5 = getFirstDir(new File(new File(new File(new File(theResultDir, level1), level2), level3), level4));
 		}
-		level4 = getFirstDir(new File(new File(new File(theResultDir, level1), level2), level3));
-		level5 = getFirstDir(new File(new File(new File(new File(theResultDir, level1), level2), level3), level4));
+		catch(Exception exp)
+		{
+			// TODO: replace eating exception with new version of default
+			level2 = null;
+			level3 = null;
+			level4 = null;
+			level5 = null;
+		}
 		// build return dir
 		String ret = "";
 		if (null!=level1)
@@ -407,15 +422,19 @@ public class JobStatus
 
 	public static void copyToWebsite(String theJob, HttpServletRequest theRequest, HttpServlet theServlet) throws IOException
 	{
-		// no longer copies--just creates a website.txt file with a link
-		File jobDir = new File(BEISTDDatasets.M_OUTPUT, theJob);
-		String index = theJob;
+		File jobDir = new File(BEIUtils.M_OUTPUT, theJob);
 		File resultDir = new File(jobDir, "MBatch");
 		theServlet.log("resultDir=" + resultDir);
 		theServlet.log("theJob=" + theJob);
 		String myPath = getDefaultDir(resultDir, theJob);
 		theServlet.log("myPath=" + myPath);
 		ArrayList<String> websiteTxt = new ArrayList<>();
+		// links do not work, copy instead
+		File zipFile = new File(jobDir, theJob + ".zip");
+		File webFile = new File(BEIUtils.M_WEBSITE, theJob + ".zip");
+		Files.copy(zipFile.toPath(), webFile.toPath());
+		//File webLink = new File(BEIUtils.M_WEBSITE, theJob + ".zip");
+		//Files.createSymbolicLink(webLink.toPath(), zipFile.toPath());
 		//
 		// websiteTxt first line, path to directory
 		//
@@ -423,13 +442,13 @@ public class JobStatus
 		//
 		// websiteTxt second line, URL to JOB
 		//
-		//http://bei_service:8080/BatchEffectsInterface/JOBupdate?jobId=1516904638750&status=MBATCH_SUCCESS
+		//http://bei_service:8080/BEI/BEI/JOBupdate?jobId=1516904638750&status=MBATCH_SUCCESS
 		websiteTxt.add(buildUrlToJob(theRequest, theServlet, theJob));
 		//
 		// websiteTxt third line, URL to WEBSITE
 		//
-		//http://bei_service:8080/BatchEffectsViewer/?index=XXX&path=YYY
-		websiteTxt.add(buildUrlToWebsite(theRequest, theServlet, index, myPath));
+		//http://bei_service:8080/BEI/BEV?id=XXX&index=YYY
+		websiteTxt.add(buildUrlToWebsite(theRequest, theServlet, theJob));
 		Files.write(new File(jobDir, "website.txt").toPath(), websiteTxt);
 	}
 
@@ -438,8 +457,8 @@ public class JobStatus
 		return request.getScheme() + "://" + BEIproperties.getProperty("BEI_URL", theServlet) + request.getContextPath() + "/newjob.html?job=" + theJob;
 	}
 
-	public static String buildUrlToWebsite(HttpServletRequest request, HttpServlet theServlet, String theIndex, String thePath) throws IOException
+	public static String buildUrlToWebsite(HttpServletRequest request, HttpServlet theServlet, String theJob) throws IOException
 	{
-		return request.getScheme() + "://" + BEIproperties.getProperty("BEV_URL", theServlet) + "/BatchEffectsViewer/?index=" + theIndex + "&path=" + thePath;
+		return request.getScheme() + "://" + BEIproperties.getProperty("BEV_URL", theServlet) + "/BEI/BEV?id=" + theJob + "&index=BEI_JOB";
 	}
 }

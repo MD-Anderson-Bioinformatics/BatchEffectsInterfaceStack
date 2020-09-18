@@ -1,10 +1,3 @@
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-
 // gets the parameters from the URL given a parameter name
 // using just JavaScript
 function getParameterByName(theName)
@@ -295,3 +288,9 @@ initializeTooltips = function()
 		tippy('#'+tooltipsImg[i].id, {html: '#'+tooltipsCont[i].id } );
 	}
 };
+
+notUN = function(theValue)
+{
+	return ((undefined!==theValue)&&(null!==theValue));
+};
+

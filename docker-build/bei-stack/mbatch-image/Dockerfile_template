@@ -1,4 +1,4 @@
-FROM mdabcb/debian_r_java:2019-06-24-1600
+FROM mdabcb/debian_r_java:2020-08-31-0800
 
 # reminder, use {} around environmental variables, otherwise docker uses it as a literal
 

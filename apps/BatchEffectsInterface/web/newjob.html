@@ -1,10 +1,5 @@
 <!DOCTYPE html>
 <!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
-<!--
 Tooltip library https://atomiks.github.io/tippyjs/
 Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 -->
@@ -81,10 +76,6 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 				//// defaults from server
 				////////////////////////////////////////////////////////////////
 
-				// populated from bei.properties
-				// should be true or false, use "maybe" to indicate unitialized status
-				self.propUseStandardizedData = ko.observable("maybe");
-
 				// Do an sync Ajax call to BEI properties to get defaults.
 				// The inline conditionals below check if theJson.theProperty got back a non-null value.
 				// If so, than the property observables are updated accordingly.
@@ -97,9 +88,6 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 					cache: false,
 					success: function (theJson)
 					{
-						self.propUseStandardizedData(
-								(null === theJson.useStandardizedData) ? self.propUseStandardizedData() : theJson.useStandardizedData
-								);
 					},
 					error: function (jqXHR, textStatus, errorThrown)
 					{
@@ -110,148 +98,38 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 
 				// *************************************************************
 				// *************************************************************
-				// **** Standardized Data code
-				// *************************************************************
-				// *************************************************************
-
-				// a variable (NOT AN OBSERVABLE) that lists all standardized data options
-				self.allDatasets = null;
-
-				// allDatasets is not an observable because we need it populated first, to simplify the rest of the code,
-				// and not have a bunch of ifs handing null value for that
-				$.ajax(
-				{
-					type: "GET",
-					dataType: 'json',
-					// needs to be syncronous -- see comment above
-					async: false,
-					url: "BEISTDDatasets",
-					cache: false,
-					success: function (theJson)
-					{
-						self.allDatasets = theJson;
-					},
-					error: function (jqXHR, textStatus, errorThrown)
-					{
-						console.log("BEISTDDatasets: " + textStatus + " and " + errorThrown);
-						alert("BEISTDDatasets: " + textStatus + " and " + errorThrown);
-					}
-				});
-
-				// Observables for Primary Standardized Dataset
-				// get the "keys" from allDataset, which for now means TCGA Standardized Data and/or GDC Standardized Data,
-				// configurable on the server side
-				self.availableSources = ko.observableArray(Object.keys(self.allDatasets));
-				// Default to first source on the list
-				self.selectedSource = ko.observable(self.availableSources()[0]);
-				// check if a source was passed in by parameter
-				var passedSource = getParameterByName("source");
-				if ((null !== passedSource) && ('' !== passedSource))
-				{
-					self.selectedSource(passedSource);
-				}
-				////////////////////////////////////////////////////////////////
-				// date list based on selected source
-				self.availableDataname = ko.computed(function ()
-				{
-					return self.allDatasets[self.selectedSource()];
-				});
-				// Default to first date on the list
-				self.selectedDataname = ko.observable(self.availableDataname()[0]);
-				// check if a date was passed in by parameter
-				var passedDataname = getParameterByName("dataname");
-				if ((null !== passedDataname) && ('' !== passedDataname))
-				{
-					self.selectedDate(passedDataname);
-				}
-
-				self.createStdDataObject = function ()
-				{
-					// obj is the standardized data object which will be constructed
-					var obj = new Object;
-
-					// create skeleton
-					obj['selected'] = {};
-					obj['options'] = {};
-					var props = ['source', 'dataname'];
-					for (i = 0; i < props.length; i++)
-					{
-						obj.selected[props[i]] = null;
-						obj.options[props[i]] = null;
-					}
-
-					// manually init available sources
-					obj.options.source = ko.observableArray(Object.keys(self.allDatasets));
-
-					// define dynamic, knockout-observable behaviour
-					for (i = 1; i < props.length; i++)
-					{
-						obj.selected[props[i - 1]] = ko.observable(obj.options[props[i - 1]]()[0]);
-
-						// obj.selected = getParamaterByName(props[i]) if getParamaterByName isnt null or blank
-
-						obj.options[props[i]] = ko.computed(function ()
-						{
-							root = self.allDatasets;
-							for (j = 0; j < i; j++)
-							{
-								root = root[obj.selected[props[j]]()];
-							}
-							return Object.keys(root);
-						});
-					}
-					return obj;
-				};
-				self.stdDataObj = self.createStdDataObject();
-
-				// use the selected standardized data
-				self.selectStandardizedData = function (theIsAlternate)
-				{
-					$.ajax(
-					{
-						type: "GET",
-						dataType: 'json',
-						async: false,
-						url: "JOBSTDData",
-						cache: true,
-						data:
-						{
-							// pass job and selections to BEI
-							isAlternate: theIsAlternate,
-							jobId: self.jobId(),
-							source: self.selectedSource(),
-							dataname: self.selectedDataname()
-						},
-						beforeSend: function ()
-						{
-							disableInput(self);
-						},
-						complete: function ()
-						{
-							enableInput(self);
-						},
-						success: function (theText)
-						{
-							refreshJobStatus(self, self.jobId());
-						},
-						error: function (jqXHR, textStatus, errorThrown)
-						{
-							console.log("JOBSTDData :" + textStatus + " and " + errorThrown);
-						}
-					});
-				};
-
-				// *************************************************************
-				// *************************************************************
 				// **** GDC Download code
 				// *************************************************************
 				// *************************************************************
 
-				// variables to select GDC Download
-				// manifest file to use for download
-				self.gdcManifestFile = ko.observable(null);
-				self.gdcManifestFileUploaded = ko.observable(false);
-				self.selectedManifestFileType = ko.observable(null);
+				self.gdcDatasetList = ko.observableArray([]);
+				self.gdcDatasetSelected = ko.observable(null);
+				$.ajax(
+				{
+					type: "GET",
+					dataType: 'json',
+					async: false,
+					url: "GDCdatasets",
+					cache: false,
+					success: function (theJson)
+					{
+						self.gdcDatasetSelected(null);
+						self.gdcDatasetList(theJson);
+					},
+					beforeSend: function ()
+					{
+						disableInput(self);
+					},
+					complete: function ()
+					{
+						enableInput(self);
+					},
+					error: function (jqXHR, textStatus, errorThrown)
+					{
+						console.log("GDCdatasets :" + textStatus + " and " + errorThrown);
+						alert("GDCdatasets :" + textStatus + " and " + errorThrown);
+					}
+				});
 				// gdcCheckAgreement requires the user to complete a click-through Modal agreement in order to access GDC Options
 				self.gdcCheckAgreement = ko.observable(false);
 
@@ -301,6 +179,7 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 				self.matrixIsSelected = ko.observable(false);
 				self.batchIsSelected = ko.observable(false);
 				self.biospecimenIsSelected = ko.observable(false);
+				self.clinicalIsSelected = ko.observable(false);
 
 				/**
 				 * A class managing a single user-file-upload option.
@@ -533,57 +412,40 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 					xhr.send(formData);
 				};
 
-				self.uploadManifest = function (theIsAlternate, theFileInputId, theBiospecimenFileInputId, theServlet, theManifestType)
+				self.uploadManifest = function(theIsAlternate, theSelectedDataset)
 				{
-					// theServlet should be UploadMatrix or UploadBatch
-					disableInput(self);
-					//document.body.classList.add("wait");
-
-					// make HTTP request
-					// The id of the relavent file input is stored and retrieved as a data attribute of the calling upload button
-					var fileSelect = document.getElementById(theFileInputId);
-					var files = fileSelect.files;
-					var fileManifest = files[0];
-					//
-					var fileSelect = document.getElementById(theBiospecimenFileInputId);
-					var files = fileSelect.files;
-					var fileBiospecimen = files[0];
-					
-					var jobId = self.jobId();
-
-					var formData = new FormData();
-
-					// Add the file to the request.
-					formData.append('jobId', jobId);
-					formData.append('manifestType', theManifestType);
-					formData.append('isAlternate', theIsAlternate);
-					formData.append('manifest', fileManifest);
-					formData.append('biospecimen', fileBiospecimen);
-
-					// Set up the request.
-					var xhr = new XMLHttpRequest();
-
-					// define response handling
-					xhr.onload = function ()
+					console.log("uploadManifest " + theIsAlternate + " and " + theSelectedDataset);
+					$.ajax(
 					{
-						if (this.responseText !== self.jobId())
+						type: "GET",
+						dataType: 'text',
+						async: false,
+						url: "UploadManifest",
+						cache: false,
+						data:
 						{
-							alert("Failed: " + xhr.responseText);
+							jobId: self.jobId(),
+							isAlternate: theIsAlternate,
+							dataset: String(theSelectedDataset)
+						},
+						beforeSend: function ()
+						{
+							disableInput(self);
+						},
+						complete: function ()
+						{
+							enableInput(self);
+						},
+						success: function (theText)
+						{
+							refreshJobStatus(self, self.jobId());
+						},
+						error: function (jqXHR, textStatus, errorThrown)
+						{
+							console.log("uploadManifest :" + textStatus + " and " + errorThrown);
+							alert("uploadManifest :" + textStatus + " and " + errorThrown);
 						}
-						//else
-						//{
-						//	document.getElementById("fileMatrixSelector").value = "";
-						//	document.getElementById("fileBatchSelector").value = "";
-						//}
-						refreshJobStatus(self, self.jobId());
-						enableInput(self);
-					};
-
-					// Open the connection.
-					xhr.open('POST', theServlet, false);
-
-					// send
-					xhr.send(formData);
+					});
 				};
 
 				// *************************************************************
@@ -634,7 +496,7 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 			<span class="mdaServiceHeaderTitle">
 				Batch Effects Interface
 				<span class="mdaServiceHeaderTitle" style="margin: 0; padding: 0;" data-bind="text:$root.serverTitle()"></span>
-				<small>2019-10-15-1100</small>
+				<small>2020-09-11-1000</small>
 				<small style="float: right;">
 					<a href="MBatch_04-99_Statistics.html" target="_blank">Statistics</a>
 					/
@@ -664,11 +526,13 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 				<strong>Step 1.a.: Specify Primary Dataset</strong>
 				<br>
 				<select class="largeInputAndSelect" data-bind="value: $root.selectedDatasetType">
-					<option value="stddata" data-bind="disable: ('true'!==$root.propUseStandardizedData())">Standardized Data</option>
 					<option value="gdcdata">GDC Downloaded Data</option>
 					<option value="userdata">User Uploaded Data</option>
 				</select>
 			</span>State:
+			<span  data-bind="visible: ('NEWJOB_START'===$root.jobState())">
+				<strong>&nbsp;<span data-bind="text:$root.jobMessage()"></span></strong>
+			</span>
 			<span  data-bind="visible: ('NEWJOB_PRIMARY_DONE'===$root.jobState()) || ('NEWJOB_DONE'===$root.jobState()) || ($root.jobState().startsWith('NEWJOB_SECONDARY_'))">
 				<img src="images/checkmark.png" class="guiIconDimensions" alt="Completed"><strong>&nbsp;Step 1.a.: Specify Primary Dataset Complete</strong>
 			</span>
@@ -696,7 +560,6 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 				<br><small>Some correction algorithms use two datasets. Use the Proceed button if you do not need a second dataset.</small>
 				<br>
 				<select class="largeInputAndSelect" data-bind="value: $root.selectedDatasetType">
-					<option value="stddata" data-bind="disable: ('true'!==$root.propUseStandardizedData())">Standardized Data</option>
 					<option value="gdcdata">GDC Downloaded Data</option>
 					<option value="userdata">User Uploaded Data</option>
 				</select>
@@ -725,27 +588,6 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 			<select class="tail_scroll" id="tail_scroll" data-bind="options: $root.jobTail, value: $root.jobTail()[$root.jobTail().length-1]" size='10' multiple='false'></select>    
 		</div>
 		<!-- **** END: Tail ************************************* -->
-		<!-- **** START: select standardized data ************************** -->
-		<div class="roundedBox" data-bind="visible: (('stddata'===$root.selectedDatasetType())&&(('NEWJOB_START'===$root.jobState())||('NEWJOB_PRIMARY_DONE'===$root.jobState())))">
-			<strong>Use Standardized Data</strong>
-			<span class="tooltip">
-				<img id="tooltipImage_selectedDatasetType_stddata" style="float: right;" title="Standardized Data Option" data-theme="myTooltipTheme" src="images/Tooltip_icon.png" class="guiIconDimensions" alt="More Info">
-				<span id="tooltipContent_selectedDatasetType_stddata" class="tooltiptext">Standardized Data Option:<br><br>
-					The goal of the Standardized Data project is to take GDC Harmonized Data and TCGA As-Submitted archives, 
-					annotations (redactions), and metadata and create homogenously formatted data and metadata that is ready 
-					for use by researchers and analysts. In pursuit of this the data has been reduced to a matrix of samples 
-					and features (genes, probes, etc) for processing.</span>
-			</span>
-			<table class="mdaCollapsedTable autoWidth">
-				<tbody>
-					<tr><td style="text-align: right;">Source:</td><td><select class="largeInputAndSelect GSSelect" data-bind="options: $root.availableSources, value: $root.selectedSource"></select></td></tr>
-					<tr><td style="text-align: right;">Dataname:</td><td><select class="veryWideInputAndSelect GSSelect" data-bind="options: $root.availableDataname, value: $root.selectedDataname"></select></td></tr>
-				</tbody>
-			</table>
-			<button class = "buttons" id="selectedPrimaryDatasetType_stddata_button" data-bind="visible: (('stddata'===$root.selectedDatasetType())&&('NEWJOB_START'===$root.jobState())), click: function(data, event) { $root.selectStandardizedData('NO'); }" >Submit</button>
-			<button class = "buttons" id="selectedSecondaryDatasetType_stddata_button" data-bind="visible: (('stddata'===$root.selectedDatasetType())&&('NEWJOB_PRIMARY_DONE'===$root.jobState())), click: function(data, event) { $root.selectStandardizedData('YES'); }" >Submit</button>
-		</div> 
-		<!-- **** END: select standardized data **************************** -->
 		<!-- **** START: select GDC Downloaded data ************************ -->
 		<div class="gdcCheckAgreementModal" data-bind="visible: ('gdcdata'===$root.selectedDatasetType()) && !($root.gdcCheckAgreement())">
 			<div style="width: 300px;" class="roundedBox modalContent">
@@ -759,41 +601,28 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 			</div>
 		</div>
 		<div class="roundedBox" data-bind="visible: (('gdcdata'===$root.selectedDatasetType()&&('NEWJOB_START'===$root.jobState()))||(('NEWJOB_PRIMARY_GDC_MANIFEST'===$root.jobState())||('NEWJOB_SECONDARY_GDC_MANIFEST'===$root.jobState())))">
-			<strong>Use GDC Downloaded Data</strong>
+			<strong>Use GDC Downloaded Data (Current)</strong>
 			<div style="float: right;" class="tooltip">
 				<img id="tooltipImage_selectedDatasetType_gdcdata" title="GDC Data Option" data-theme="myTooltipTheme" src="images/Tooltip_icon.png" class="guiIconDimensions" alt="More Info">
 				<span id="tooltipContent_selectedDatasetType_gdcdata" class="tooltiptext">GDC Download Option:<br><br>
-					Upload and use a manifest file from the GDC Data Portal.
+					Select dataset from GDC to download.
 				</span>
 			</div>
 			<table>
 				<tbody>
 					<tr  data-bind="visible: ('NEWJOB_START'===$root.jobState())||('NEWJOB_PRIMARY_DONE'===$root.jobState())">
-						<td>Manifest File Type Selection:</td>
+						<td>GDC Dataset Selection:</td>
 						<td>
-							<select class="largeInputAndSelect" data-bind="value: $root.selectedManifestFileType">
-								<option value="Current-methy450">Current: methylation450-txt</option>
-								<option value="Current-miRNAiso">Current: miRNA-isoform-txt</option>
-								<option value="Current-miRNAtxt">Current: miRNA-txt</option>
-								<option value="Current-MuSE_Maf">Current: MuSE-maf-gz</option>
-								<option value="Current-MuTe2Maf">Current: MuTect2-maf-gz</option>
-								<option value="Current-RNASeqHT">Current: RNASeq-HTSeq-counts-gz</option>
-								<option value="Current-SNP6mask">Current: SNP6-masked-txt</option>
-								<option value="Current-SniprMaf">Current: SomaticSniper-maf-gz</option>
-								<option value="Current-VarScMaf">Current: VarScan2-maf-gz</option>
-							</select>
+							<select class="veryWideInputAndSelect" data-bind="options: $root.gdcDatasetList, selectedOptions: $root.gdcDatasetSelected"></select>
+						</td>
+					</tr>
+					<tr  data-bind="visible: ('NEWJOB_START'===$root.jobState())||('NEWJOB_PRIMARY_DONE'===$root.jobState())">
+						<td>Selected Dataset:</td>
+						<td>
+							<span data-bind="text:$root.gdcDatasetSelected()"></span>
 						</td>
 					</tr>
 					<tr>
-						<td>
-							<span data-bind="visible: ('NEWJOB_START'===$root.jobState())||('NEWJOB_PRIMARY_DONE'===$root.jobState())">
-								Data Manifest File Upload:
-								<input id="gdcManifestFileSelector" type="file" name="file" style="border: none;" data-bind="event: { change: function(data,event){ $root.toggleUploadButton($root.matrixIsSelected, data, event); } }" />
-								<br>
-								Biospecimen Manifest File Upload:
-								<input id="gdcManifestBiospecimenSelector" type="file" name="file" style="border: none;" data-bind="event: { change: function(data,event){ $root.toggleUploadButton($root.biospecimenIsSelected, data, event); } }" />
-							</span>
-						</td>
 						<td>
 							<span  data-bind="visible: ('NEWJOB_PRIMARY_GDC_MANIFEST'===$root.jobState())">
 								<img src="images/checkmark.png" class="guiIconDimensions" alt="Completed"><strong>&nbsp;Primary GDC Manifest Files Uploaded</strong>
@@ -802,9 +631,11 @@ Some icons from http://tango.freedesktop.org/Tango_Desktop_Project
 								<img src="images/checkmark.png" class="guiIconDimensions" alt="Completed"><strong>&nbsp;Secondary GDC Manifest Files Uploaded</strong>
 							</span>
 							<button class="buttons" id="gdcManifestFileSelectorButtonPrimary" 
-									data-bind="click: function(data, event) { $root.uploadManifest('NO', 'gdcManifestFileSelector', 'gdcManifestBiospecimenSelector', 'UploadManifest', $root.selectedManifestFileType()); }, visible: ('NEWJOB_START'===$root.jobState())">Upload Primary GDC Manifest Files</button>
+									data-bind="click: function(data, event) { $root.uploadManifest('NO', $root.gdcDatasetSelected()); }, visible: ('NEWJOB_START'===$root.jobState())">Select Primary GDC Selection</button>
 							<button class="buttons" id="gdcManifestFileSelectorButtonSecondary" 
-									data-bind="click: function(data, event) { $root.uploadManifest('YES', 'gdcManifestFileSelector', 'gdcManifestBiospecimenSelector', 'UploadManifest', $root.selectedManifestFileType()); }, visible: ('NEWJOB_PRIMARY_DONE'===$root.jobState())">Upload Secondary GDC Manifest Files</button>
+									data-bind="click: function(data, event) { $root.uploadManifest('YES', $root.gdcDatasetSelected()); }, visible: ('NEWJOB_PRIMARY_DONE'===$root.jobState())">Select Secondary GDC Selection</button>
+						</td>
+						<td>
 						</td>
 					</tr>
 				</tbody>

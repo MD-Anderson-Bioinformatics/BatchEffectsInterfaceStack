@@ -2,7 +2,7 @@
 
 # (CLJ)
 #
-# runMbatch1.R makes a get request to BatchEffectsInterface/JOBnext to see if there are pending jobs
+# runMbatch1.R makes a get request to BEI/BEI/JOBnext to see if there are pending jobs
 # A is the output of runMBatch1.R, which is either the jobId as a string or "none"
 #
 # runMBatch2.R runs the actual R stastical analysis (a.k.a. the R function mbatchRunFromConfig)

@@ -1,13 +1,19 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 University of Texas MD Anderson Cancer Center
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// MD Anderson Cancer Center Bioinformatics on GitHub <https://github.com/MD-Anderson-Bioinformatics>
+// MD Anderson Cancer Center Bioinformatics at MDA <https://www.mdanderson.org/research/departments-labs-institutes/departments-divisions/bioinformatics-and-computational-biology.html>
+
 package edu.mda.bioinfo.bei.status;
 
 /**
  *
- * @author linux
+ * @author Tod-Casasent
  */
 public enum JOB_STATUS
 {
@@ -22,6 +28,7 @@ public enum JOB_STATUS
 	NEWJOB_SECONDARY_GDCRUN_WAIT("NEWJOB_SECONDARY_GDCRUN_WAIT", "Secondary Matrix GDC Download in Progress"),
 	NEWJOB_SECONDARY_USER_MATRIX("NEWJOB_SECONDARY_USER_MATRIX", "Secondary Matrix Data Uploaded. Waiting for Batch Data."),
 	NEWJOB_SECONDARY_DONE("NEWJOB_SECONDARY_DONE", "Secondary Data Available."),
+	NEWJOB_FAILURE("NEWJOB_FAILURE", "Data Setup Failed."),
 	NEWJOB_DONE("NEWJOB_DONE", "Data Setup Complete. Ready for MBatch Configuration."),
 	
 	MBATCHCONFIG_START("MBATCHCONFIG_START", "MBatch Configuration in Process"),
