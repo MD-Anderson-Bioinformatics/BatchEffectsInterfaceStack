@@ -1,30 +1,29 @@
 # this is the docker-compose version
 version: '3.0'
 
-# file version 2018-05-22-1300
+# file version BEA_VERSION_TIMESTAMP
 
 
 networks:
     # network for this compose stack
     bei_network_<ENVIRON>:
         driver: bridge
-        ipam:
-            config:
-            - subnet: <SUBNET>
+#SUBNET        ipam:
+#SUBNET            config:
+#SUBNET            - subnet: <SUBNET>
 services:
     # beiService runs tomcat with Batch Effects Interface
     beiService:
-        container_name: bei_cont_<ENVIRON>
-        # update :latest to desired version
-        image: <BEI-IMAGETXT>:<BEI-DESIREDTAG>
+        networks:
+            - bei_network_<ENVIRON>
         # restart this container if it crashes
         restart: always
         # build from sub-directory and Dockerfile
         build:
             context: ./bei-image
             dockerfile: Dockerfile
-        networks:
-            - bei_network_<ENVIRON>
+        container_name: bei_cont_<ENVIRON>
+        image: <BEI-IMAGEURL>
         volumes:
             # external:internal
             # file with properties and job list for this installation
@@ -35,45 +34,50 @@ services:
             - <WEBSITE-DIR>:/BEI/WEBSITE
             # read-only directory for HG38 map
             - <UTIL-DIR>:/BEI/UTILS:ro
+            # SMW paths for Metabolomics Workbench DAta
+            - <CONFIGPATH>:/SMW/MW_CACHE:ro
+            - <ZIPTMPPATH>:/SMW/MW_ZIP
             # read-only file to set time and timezone to same in image as on server
             - /etc/localtime:/etc/localtime:ro
-            - /etc/localtime:/etc/timezone:ro
+            - /etc/timezone:/etc/timezone:ro
         ports:
             # (outside)host port:container port(inside)
             - "<BEI-PORT>:8080"
         tty: true
     mbatchService:
-        container_name: mbatch_cont_<ENVIRON>
-        # update :latest to desired version
-        image: <MBATCH-IMAGETXT>:<MBATCH-DESIREDTAG>
+        networks:
+            - bei_network_<ENVIRON>
         # restart this container if it crashes
         restart: always
         build:
             # build from sub-directory and Dockerfile
             context: ./mbatch-image
             dockerfile: Dockerfile
-        networks:
-            - bei_network_<ENVIRON>
+        container_name: mbatch_cont_<ENVIRON>
+        image: <MBATCH-IMAGEURL>
         volumes:
             # directory for output from BEI, GDCDownload, and MBatch Results external:internal
             - <JOB-OUTPUT-DIR>:/BEI/OUTPUT
             # directory for the Batch Effects Website (must be on Linux file system since links to /BEI/OUTOUT are created here)
             - <WEBSITE-DIR>:/BEI/WEBSITE
+            # SMW paths for Metabolomics Workbench DAta
+            - <CONFIGPATH>:/SMW/MW_CACHE:ro
+            - <ZIPTMPPATH>:/SMW/MW_ZIP
             # read-only file to set time and timezone to same in image as on server
             - /etc/localtime:/etc/localtime:ro
-            - /etc/localtime:/etc/timezone:ro
+            - /etc/timezone:/etc/timezone:ro
         links:
             # links required to talk to http://beiService:8080/
             - beiService
     gdcService:
         container_name: gdc_cont_<ENVIRON>
         # update :latest to desired version
-        image: <GDC-IMAGETXT>:<GDC-DESIREDTAG>
+        image: <GDC-IMAGEURL>
         # restart this container if it crashes
         restart: always
         build:
             # build from sub-directory and Dockerfile
-            context: ./gdcdc-image
+            context: ./dc-image
             dockerfile: Dockerfile
         networks:
             - bei_network_<ENVIRON>
@@ -82,33 +86,37 @@ services:
             - <JOB-OUTPUT-DIR>:/BEI/OUTPUT
             # directory for the Batch Effects Website (must be on Linux file system since links to /BEI/OUTOUT are created here)
             - <WEBSITE-DIR>:/BEI/WEBSITE
+            # SMW paths for Metabolomics Workbench DAta
+            - <CONFIGPATH>:/SMW/MW_CACHE:ro
+            - <ZIPTMPPATH>:/SMW/MW_ZIP
             # read-only file to set time and timezone to same in image as on server
             - /etc/localtime:/etc/localtime:ro
-            - /etc/localtime:/etc/timezone:ro
+            - /etc/timezone:/etc/timezone:ro
         links:
             # links required to talk to http://beiService:8080/
             - beiService
     bevService:
-        container_name: bev_cont_<ENVIRON>
-        # update :latest to desired version
-        image: <BEV-IMAGETXT>:<BEV-DESIREDTAG>
+        networks:
+            - bei_network_<ENVIRON>
         # restart this container if it crashes
         restart: always
         build:
             # build from sub-directory and Dockerfile
             context: ./bev-image
             dockerfile: Dockerfile
-        networks:
-            - bei_network_<ENVIRON>
+        container_name: bev_cont_<ENVIRON>
+        # update :latest to desired version
+        image: <BEV-IMAGEURL>
         volumes:
             # external:internal
             # directory for dap.properties
             - <PROP-DIR>:/DAPI/CONFIG:ro
             # directory for "website" output
-            - <WEBSITE-DIR>:/BEV/DATA:ro
+            - <WEBSITE-DIR>:/DAPI/DATA:ro
             # read-only file to set time and timezone to same in image as on server
             - /etc/localtime:/etc/localtime:ro
-            - /etc/localtime:/etc/timezone:ro
+            - /etc/timezone:/etc/timezone:ro
         ports:
             # (outside)host port:container port(inside)
             - "<BEV-PORT>:8080"
+

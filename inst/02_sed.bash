@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "start sedFiles"
 
-echo "2019-02-01-1035"
+echo "BEA_VERSION_TIMESTAMP"
 
 BASEDIR="<REPLACE>"
 DESIREDTAG="BEI_<REPLACE>"
@@ -47,11 +47,11 @@ if [ -e ${BASEDIR}/build/bei-stack/bev-image/Dockerfile ]; then
 fi
 sed -e "s|<USERID>|${USER_ID}|g" ${BASEDIR}/build/bei-stack/bev-image/Dockerfile_template > ${BASEDIR}/build/bei-stack/bev-image/Dockerfile
 
-echo "gdcdc-image/Dockerfile_template"
-if [ -e ${BASEDIR}/build/bei-stack/gdcdc-image/Dockerfile ]; then
-	rm ${BASEDIR}/build/bei-stack/gdcdc-image/Dockerfile
+echo "dc-image/Dockerfile_template"
+if [ -e ${BASEDIR}/build/bei-stack/dc-image/Dockerfile ]; then
+	rm ${BASEDIR}/build/bei-stack/dc-image/Dockerfile
 fi
-sed -e "s|<DOCKER_UID>|${USER_ID}|g" ${BASEDIR}/build/bei-stack/gdcdc-image/Dockerfile_template > ${BASEDIR}/build/bei-stack/gdcdc-image/Dockerfile
+sed -e "s|<DOCKER_UID>|${USER_ID}|g" ${BASEDIR}/build/bei-stack/dc-image/Dockerfile_template > ${BASEDIR}/build/bei-stack/dc-image/Dockerfile
 
 echo "mbatch-image/Dockerfile_template"
 if [ -e ${BASEDIR}/build/bei-stack/mbatch-image/Dockerfile ]; then

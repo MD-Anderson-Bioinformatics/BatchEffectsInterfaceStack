@@ -1,4 +1,4 @@
-# MBatch Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 University of Texas MD Anderson Cancer Center
+# MBatch Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 University of Texas MD Anderson Cancer Center
 #
 # This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
 #
@@ -12,8 +12,6 @@
 library(MBatch)
 library(MBatchUtils)
 library(httr)
-
-message("runMBatch3.R 2019-01-08-1316")
 
 #jobID comes from commandArgs()
 jobID <- NULL
@@ -29,19 +27,34 @@ for( myStr in commandArgs() )
   }
 }
 
+findCorrectedTsv <- function(theBaseDir)
+{
+  filepath <- NULL
+  fileFound <- dir(theBaseDir, "ANY_Corrections-.*tsv")
+  if (length(fileFound)>0)
+  {
+    filepath <- file.path(theBaseDir, fileFound)
+  }
+  filepath
+}
+
 # buildSingleArchive(mbatchID, originalDataJsonFile, mbatchResultsDir, zipDir)
 # String mbatchID = "MBATCH_ID_0000";
-# String originalDataJsonFile = "/code/development/2020_03_12_1022/original_data.json";
-# String mbatchResultsDir = "/code/development/2020_03_12_1022/MBatch/";
-# String zipDir = "/code/development/2020_03_12_1022/";
+# String originalDataJsonFile = "/path/2020_03_12_1022/original_data.json";
+# String mbatchResultsDir = "/path/2020_03_12_1022/MBatch/";
+# String zipDir = "/path/2020_03_12_1022/";
 
 runStatus <- "success"
 tryCatch({
   mbatchID <- jobID
-  originalDataJsonFile <- file.path("/BEI/OUTPUT", jobID, "original_data.json")
-  mbatchResultsDir <- file.path("/BEI/OUTPUT", jobID, "MBatch", jobID)
   zipDir <- file.path("/BEI/OUTPUT", jobID)
-  buildSingleArchive(mbatchID, originalDataJsonFile, mbatchResultsDir, zipDir)
+  resultDir <- file.path("/BEI/OUTPUT", jobID, "ZIP-RESULTS")
+  dataDir <- file.path("/BEI/OUTPUT", jobID, "ZIP-DATA")
+  message(paste("runMBatch3.R mbatchID: ", mbatchID))
+  message(paste("runMBatch3.R zipDir: ", zipDir))
+  message(paste("runMBatch3.R resultDir: ", resultDir))
+  message(paste("runMBatch3.R dataDir: ", dataDir))
+  buildSingleArchive(theMbatchID=mbatchID, theResultDir=resultDir, theDataDir=dataDir, theZipDir=zipDir)
 }, warning = function(war){
   message(paste("runMBatch3.R hit the Warning: ", war))
   runStatus <- "warning"

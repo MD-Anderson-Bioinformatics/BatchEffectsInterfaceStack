@@ -1,30 +1,38 @@
-FROM debian:9
+FROM centos:centos8
 
 # reminder, use {} around environmental variables, otherwise docker uses it as a literal
 
-LABEL edu.mda.bcb.name="BatchEffectsViewer" \
-      edu.mda.bcb.version="2018-11-20-1616" \
-      edu.mda.bcb.url="/BatchEffectsViewer/" \
-      edu.mda.bcb.log="/usr/local/tomcat/logs/localhost.*.log"
+LABEL edu.mda.bcb.name="Batch Effects Interface: BatchEffectsViewer" \
+      edu.mda.bcb.sub="bvi" \
+      edu.mda.bcb.bvi.version="BEA_VERSION_TIMESTAMP" \
+      edu.mda.bcb.bvi.log="<LOG_DIR>" \
+      edu.mda.bcb.bvi.start="<START_SCRIPT>" \
+      edu.mda.bcb.bvi.stop="<STOP_SCRIPT>" \
+      edu.mda.bcb.bvi.upcheck="<UPCHECK_SCRIPT>"
+
+# Use Java 8, still supported, and all the tools depend on it -- simplifies other installs and maintenance
+RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
+    dnf -y install java-1.8.0-openjdk java-1.8.0-openjdk-devel java-1.8.0-openjdk-headless && \
+    update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.265.b01-0.el8_2.x86_64/jre/bin/java 1 && \
+    update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.265.b01-0.el8_2.x86_64/bin/javac 1 && \
+    update-alternatives --install /usr/bin/jar jar /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.265.b01-0.el8_2.x86_64/bin/jar 1 && \
+    update-alternatives --install /usr/bin/javah javah /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.265.b01-0.el8_2.x86_64/bin/javah 1 && \
+    echo "export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.265.b01-0.el8_2.x86_64" >> /etc/profile.d/java.sh && \
+    yum update -y && \
+    yum clean all
+
+# create and setup bcbuser
+# also, set permissions and ownerships on internal docker directories
+RUN useradd -l -s /bin/bash -d /home/bcbuser -u <USERID> bcbuser && \
+    chown -R bcbuser:bcbuser /home/bcbuser
+
+# install Tomcat 9, set to run as bcbuser
 
 ENV TOMCAT_MAJOR=9 \
-    TOMCAT_VERSION=9.0.12 \
+    TOMCAT_VERSION=9.0.39 \
     TOMCAT_HOME=/opt/tomcat \
     CATALINA_HOME=/opt/tomcat \
     CATALINA_OUT=/dev/null
-
-# install JDK, apt utils
-RUN apt-get update && \
-    apt-get upgrade -f -y && \
-    apt-get install -f -y apt-utils readline-common procps curl && \
-    apt-get install -f -y openjdk-8-jdk && \
-    apt-get clean
-
-# create and setup docker_tcga use to external directory owner
-# also, set permissions and ownerships on internal docker directories
-RUN mkdir /home/docker_tcga && \
-    useradd -l -s /bin/bash -d /home/docker_tcga -u <USERID> docker_tcga && \
-    chown -R docker_tcga:docker_tcga /home/docker_tcga
 
 RUN curl -jksSL -o /tmp/apache-tomcat.tar.gz http://archive.apache.org/dist/tomcat/tomcat-${TOMCAT_MAJOR}/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz && \
     gunzip /tmp/apache-tomcat.tar.gz && \
@@ -34,63 +42,27 @@ RUN curl -jksSL -o /tmp/apache-tomcat.tar.gz http://archive.apache.org/dist/tomc
     rm -rf ${TOMCAT_HOME}/webapps/ROOT && \
     rm -rf ${TOMCAT_HOME}/webapps/examples && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    chown -R docker_tcga:docker_tcga ${TOMCAT_HOME} && \
+    chown -R bcbuser:bcbuser ${TOMCAT_HOME} && \
     ln -s /opt/apache-tomcat-${TOMCAT_VERSION} ${TOMCAT_HOME} && \
-    apt-get clean
+    yum clean all
 
-# NOTE: for production/stage, skip tomcat-users.xml, manager-context.xml, and host-manager-context.xml
-# unless you want to enable tomcat user and management console
+# copy installs
 # COPY is always done as root!!!!
-#COPY installations/tomcat-users.xml ${CATALINA_HOME}/conf/tomcat-users.xml
-#COPY installations/manager-context.xml ${CATALINA_HOME}/webapps/manager/META-INF/context.xml
-#COPY installations/host-manager-context.xml ${CATALINA_HOME}/webapps/host-manager/META-INF/context.xml
-#RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
-#    chmod -R u+rwx ${CATALINA_HOME}/conf
-#RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/webapps && \
-#    chmod -R u+rwx ${CATALINA_HOME}/webapps
-
-# copy server.xml to allow MDA Active Directory Authentication
-# COPY is always done as root!!!!
-#NOT NEEDED YET COPY installations/server.xml ${CATALINA_HOME}/conf/server.xml
-#NOT NEEDED YET COPY installations/context.xml ${CATALINA_HOME}/conf/context.xml
-RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
-    chmod -R u+rwx ${CATALINA_HOME}/conf
-
 # copy server.xml to start compression - may need to be merged with above later
+# also formats output for LOGREPORT
 COPY installations/server.xml ${CATALINA_HOME}/conf/server.xml
-RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/conf && \
+RUN chown -R bcbuser:bcbuser ${CATALINA_HOME}/conf && \
     chmod -R u+rwx ${CATALINA_HOME}/conf
 
 # copy installs
 # COPY is always done as root!!!!
 COPY installations/*.war ${CATALINA_HOME}/webapps/.
-RUN chown -R docker_tcga:docker_tcga ${CATALINA_HOME}/webapps && \
+RUN chown -R bcbuser:bcbuser ${CATALINA_HOME}/webapps && \
     chmod -R u+rwx ${CATALINA_HOME}/webapps
 
-# make and set ownership and permissions on internal image volume mount locations
-# must be done in one step, or could lock permissions in future images
-RUN mkdir -p /BEV/IndexFiles && \
-    chown -R docker_tcga:docker_tcga /BEV && \
-    chmod -R u+rwx /BEV && \
-    mkdir -p /BEI/OUTPUT && \
-    chown -R docker_tcga:docker_tcga /BEI && \
-    chmod -R u+rwx /BEI
+# switch from root to bcbuser user
+USER bcbuser
 
-# switch from root to docker_tcga user
-USER docker_tcga
-
-# declare internal volumes
-VOLUME /BEV/IndexFiles /BEI/OUTPUT
-
-# make and set ownership and permissions on internal image volume mount locations
-RUN chown -R docker_tcga:docker_tcga /BEV && \
-    chmod -R u+rwx /BEV && \
-    chown -R docker_tcga:docker_tcga /BEI && \
-    chmod -R u+rwx /BEI
-
-RUN ls -l /BEV/IndexFiles
-
-RUN ls -l /BEI/OUTPUT
-
-USER docker_tcga
+USER bcbuser
 CMD ["/opt/tomcat/bin/catalina.sh", "run"]
+

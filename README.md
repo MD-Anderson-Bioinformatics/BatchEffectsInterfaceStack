@@ -1,3 +1,4 @@
+
 # Batch Effects Interface
 
  * Rehan Akbani (owner)
@@ -7,34 +8,44 @@
 
 Batch Effects Interface is an HTTP GUI interface to a Batch Effects Interface (BEI) Docker Compose Stack. BEI includes images for a GUI component, an MBatch processing component, a Viewer and analysis component, and a component for downloading and converting GDC data for use with BEI.
 
-## Quick Start with Docker:
+### Batch Effects Interface Docker Quick Start
 
-Clone the GitHub repository with a shallow clone, since you will not be checking anything back in. This clone call grabs the newest version from master.
+Download the docker-compose.yml file at the root of this repository. This file is setup for use on Linux.
+(The context for the services has also been changed to allow running from this location.)
 
->
->git clone --depth 1 https://github.com/MD-Anderson-Bioinformatics/BatchEffectsInterfaceStack.git
-> 
+Make the following directories.
 
-Edit the file scripts/02_sed.bash as described in the documentation https://github.com/MD-Anderson-Bioinformatics/BatchEffectsInterfaceStack/blob/master/docs/BEI_01A_InstallExternalLinux.pdf
+ - /BEI/OUTPUT
+ - /BEI/PROPS
+ - /BEI/UTIL
+ - /BEI/WEBSITE
+ - /BEI/MW_CONFIG
+ - /BEI/MW_ZIP
 
-Create the Dockerfile using the edited scripts/02_sed.bash. Setup the directories you specified when editing the bash script.
+Then copy directory contents.
 
-With the resulting docker-compose.yml file, pull the images with:
+ 1. Copy the contents of inst/ext/MW_CONFIG into /BEI/MW_CONFIG.
+ 2. Copy the contents of inst/ext/OUTPUT into /BEI/OUTPUT.
+ 3. Copy the contents of inst/ext/PROPS into /BEI/PROPS.
+ 4. Copy the contents of inst/ext/UTIL into /BEI/UTIL.
+ 5. Copy the contents of inst/ext/WEBSITE into /BEI/WEBSITE.
 
->
->docker-compose -f docker-compose.yml pull
+Permissions or ownership of the directories may need to be changed or matched to the Docker image user 2004.
 
+In the directory with the docker-compose.yml file run:
 
-In the /BEI_EXT/build/bei-stack/ directory with the docker-compose.yml file, the containers (stack) are started using:
+    docker-compose -p beihub -f docker-compose.yml up --no-build -d
 
->
->docker-compose -p EXT -f docker-compose.yml up -d
+You can stop it with:
 
+    docker-compose -p beihub -f docker-compose.yml down
 
-The EXT may be varied if needed on your system to ensure unique ids for the stack.
+To connect to the MBatch Omic Browser with:
 
-The Docker Compose Stack can be stopped using:
+	localhost:8080/BEI/BEI
 
->
->docker-compose -p EXT -f docker-compose.yml down
->
+**For educational and research purposes only.**
+
+**Funding** 
+This work was supported in part by U.S. National Cancer Institute (NCI) grant: Weinstein, Mills, Akbani. Batch effects in molecular profiling data on cancers: detection, quantification, interpretation, and correction, 5U24CA210949
+

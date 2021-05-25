@@ -18,15 +18,15 @@ echo "start runRproc.bash"
 baseDir=`pwd`
 echo baseDir=${baseDir}
 
-beiURL=$1
+export beiURL=$1
 
-rFile1=${baseDir}/runMBatch1.R
-rFile2=${baseDir}/runMBatch2.R
-rFile3=${baseDir}/runMBatch3.R
-rFileFinal=${baseDir}/runMBatchFinal.R
-rLogr=${baseDir}/runMBatch.rLog
+export rFile1=${baseDir}/runMBatch1.R
+export rFile2=${baseDir}/runMBatch2.R
+export rFile3=${baseDir}/runMBatch3.R
+export rFileFinal=${baseDir}/runMBatchFinal.R
+export rLogr=${baseDir}/runMBatch.rLog
 
-echo 'Invoking R 2017-11-20-1200'
+echo 'Invoking R BEA_VERSION_TIMESTAMP'
 
 # use this instead of looping inside R, since R leaks memory really badly
 while true
@@ -40,15 +40,15 @@ do
 	echo rFile3=${rFile3}
 	echo rFileFinal=${rFileFinal}
 	echo rLogr=${rLogr}
-	A=$(Rscript --vanilla "$rFile1" "-beiURL=$beiURL" | tee 2>&1 "$rLogr")
+	export A=$(Rscript --vanilla "$rFile1" "-beiURL=$beiURL" | tee 2>&1 "$rLogr")
 	# A=$(R CMD BATCH --vanilla --args -beiURL="$beiURL" "$rFile1" "$rLogr")
 	if [ "$A" != "none" ];
 	then
 		echo Found job "$A", now starting
-		jobLogr=/BEI/OUTPUT/${A}/log.rLog
-		Rscript --vanilla "$rFile2" "-jobID=$A" >> "$jobLogr" 2>&1
-		Rscript --vanilla "$rFile3" "-jobID=$A" >> "$jobLogr" 2>&1
-		Rscript --vanilla "$rFileFinal" "-jobID=$A" "-beiURL=$beiURL" >> "$jobLogr" 2>&1
+		export jobLogr=/BEI/OUTPUT/${A}/log.rLog
+		script -a -f -c 'Rscript --vanilla "$rFile2" "-jobID=$A"' "$jobLogr"
+		script -a -f -c 'Rscript --vanilla "$rFile3" "-jobID=$A"' "$jobLogr"
+		script -a -f -c 'Rscript --vanilla "$rFileFinal" "-jobID=$A" "-beiURL=$beiURL"' "$jobLogr"
 		echo MBatch Complete
 	else
 	    echo No job found, now sleeping

@@ -1,47 +1,36 @@
-FROM mdabcb/debian_r_java:2020-08-31-0800
+FROM mdabcb/mbatchsa_image:BEA_VERSION_TIMESTAMP
 
 # reminder, use {} around environmental variables, otherwise docker uses it as a literal
 
-LABEL edu.mda.bcb.name="MBatch Stand Alone" \
-      edu.mda.bcb.version="2019-06-17-1035" \
-      edu.mda.bcb.url="http://<server-ip>:8787"
+LABEL edu.mda.bcb.name="Batch Effects Interface: MBatch" \
+      edu.mda.bcb.sub="bei" \
+      edu.mda.bcb.bea.version="BEA_VERSION_TIMESTAMP" \
+      edu.mda.bcb.bea.log="<LOG_DIR>" \
+      edu.mda.bcb.bea.start="<START_SCRIPT>" \
+      edu.mda.bcb.bea.stop="<STOP_SCRIPT>" \
+      edu.mda.bcb.bea.upcheck="<UPCHECK_SCRIPT>"
 
-# create and setup docker_tcga use to external directory owner
+# create and setup beiuser use to external directory owner
 # also, set permissions and ownerships on internal docker directories
-RUN mkdir /home/docker_tcga && \
-    useradd -l -s /bin/bash -d /home/docker_tcga -u <USERID> docker_tcga && \
-    chown -R docker_tcga:docker_tcga /home/docker_tcga
-
-# create and setup docker_tcga user
-# also, set permissions and ownerships on internal docker directories
-# make and set ownership and permissions on internal image volume mount locations
-# must be done in one step, or could lock permissions in future images
-RUN mkdir -p /BEI/MBATCH && \
-    mkdir -p /BEI/WEBSITE && \
-    mkdir -p /BEI/OUTPUT && \
-    chown -R docker_tcga:docker_tcga /BEI && \
-    chmod -R u+rwx /BEI
+RUN mkdir /home/beiuser && \
+    useradd -l -s /bin/bash -d /home/beiuser -u <USERID> beiuser && \
+    chown -R beiuser:beiuser /home/beiuser
 
 # make subdirectory in user home for running
 # COPY is always done as root!!!!
-RUN mkdir /home/docker_tcga/mbatch && \
-    chown -R docker_tcga:docker_tcga /home/docker_tcga/mbatch && \
-    chmod -R u+rwx /home/docker_tcga/mbatch
-COPY installations /home/docker_tcga/mbatch
+RUN mkdir /home/beiuser/mbatch && \
+    chown -R beiuser:beiuser /home/beiuser/mbatch && \
+    chmod -R u+rwx /home/beiuser/mbatch
+COPY installations /home/beiuser/mbatch
 
-RUN chown -R docker_tcga:docker_tcga /home/docker_tcga && \
-    chmod -R u+rwx /home/docker_tcga && \
-    ls -l /home/docker_tcga/mbatch
+RUN chown -R beiuser:beiuser /home/beiuser && \
+    chmod -R u+rwx /home/beiuser && \
+    ls -l /home/beiuser/mbatch
 
-# install MBatch and MBatchUtils separately from above, so can be installed without reperforming above
-RUN cd /home/docker_tcga/mbatch && \
-    R CMD INSTALL MBatch_*.tar.gz && \
-    R CMD INSTALL MBatchUtils_*.tar.gz
-
-# switch from root to docker_tcga user
-USER docker_tcga
+# switch from root to beiuser user
+USER beiuser
 
 # set working directory for future commands
-WORKDIR /home/docker_tcga/mbatch
-CMD ["/bin/bash", "/home/docker_tcga/mbatch/runRproc.bash", "http://beiService:8080/"]
+WORKDIR /home/beiuser/mbatch
+CMD ["/bin/bash", "/home/beiuser/mbatch/runRproc.bash", "http://beiService:8080/"]
 
