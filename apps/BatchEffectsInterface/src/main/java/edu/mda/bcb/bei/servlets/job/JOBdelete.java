@@ -40,6 +40,7 @@ public class JOBdelete extends BEIServletMixin
 	{
 		String jobId = request.getParameter("jobId");
 		log("passed in jobId is " + jobId);
+		JobStatus.checkJobId(jobId);
 		if ((jobId!=null)&&!("".equals(jobId)))
 		{
 			File jobDir = new File(BEIUtils.M_OUTPUT, jobId);

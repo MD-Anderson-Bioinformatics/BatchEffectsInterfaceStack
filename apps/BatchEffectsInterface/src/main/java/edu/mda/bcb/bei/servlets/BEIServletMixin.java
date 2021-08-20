@@ -13,6 +13,7 @@ package edu.mda.bcb.bei.servlets;
 
 import edu.mda.bcb.bei.utils.BEIUtils;
 import edu.mda.bcb.bei.authorization.Authorization;
+import edu.mda.bcb.bei.status.JobStatus;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -69,6 +70,10 @@ public abstract class BEIServletMixin extends HttpServlet
 			log("version = " + edu.mda.bcb.bei.utils.BEIUtils.M_VERSION);
 			String jobId = request.getParameter("jobId");
 			log("passed in jobId is " + jobId);
+			if (null!=jobId)
+			{
+				JobStatus.checkJobId(jobId);
+			}
 			if ((null!=jobId)&&(false!=mCheckUserAuthorization))
 			{
 				log("auth jobId is " + jobId);
@@ -97,8 +102,8 @@ public abstract class BEIServletMixin extends HttpServlet
 		{
 			log("BEIServletMixin::processRequest failed", exp);
 			response.setContentType("text;charset=UTF-8");
-			response.setStatus(500);
-			response.sendError(500, exp.getMessage());
+			response.setStatus(400);
+			response.sendError(400);
 			if (null!=mErrorFile)
 			{
 				Files.write(mErrorFile.toPath(), exp.getMessage().getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);

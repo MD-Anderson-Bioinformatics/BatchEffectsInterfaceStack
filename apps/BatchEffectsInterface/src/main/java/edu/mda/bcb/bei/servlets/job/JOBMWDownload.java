@@ -43,6 +43,7 @@ public class JOBMWDownload extends BEIServletMixin
 		////////////////////////////////////////////////////////////////////
 		String jobId = request.getParameter("jobId");
 		log("passed in jobId is " + jobId);
+		JobStatus.checkJobId(jobId);
 		String isAlternate = request.getParameter("isAlternate");
 		log("passed in isAlternate is " + isAlternate);
 		File jobDir = new File(BEIUtils.M_OUTPUT, jobId);

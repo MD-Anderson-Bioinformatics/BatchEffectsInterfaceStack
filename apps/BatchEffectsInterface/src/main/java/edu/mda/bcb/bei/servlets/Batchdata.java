@@ -15,6 +15,7 @@ import edu.mda.bcb.bei.utils.BEIUtils;
 import edu.mda.bcb.bei.processes.BatchdataObj;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import edu.mda.bcb.bei.status.JobStatus;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -43,8 +44,10 @@ public class Batchdata extends BEIServletMixin
 	@Override
 	protected void internalProcess(HttpServletRequest request, StringBuffer theBuffer) throws Exception
 	{
+		// return to user handled in parent
 		String jobId = request.getParameter("jobId");
 		log("passed in jobId is " + jobId);
+		JobStatus.checkJobId(jobId);
 		String isAlternate = request.getParameter("isAlternate");
 		// NO, YES, YES-IGNORE
 		log("passed in isAlternate is " + isAlternate);

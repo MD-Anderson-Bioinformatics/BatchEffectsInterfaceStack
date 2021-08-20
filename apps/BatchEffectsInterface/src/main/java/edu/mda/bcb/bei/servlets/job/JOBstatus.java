@@ -37,6 +37,7 @@ public class JOBstatus extends BEIServletMixin
 		log("version = " + edu.mda.bcb.bei.utils.BEIUtils.M_VERSION);
 		String jobId = request.getParameter("jobId");
 		log("passed in jobId is " + jobId);
+		JobStatus.checkJobId(jobId);
 		theBuffer.append(JobStatus.getResponseString(this, jobId, /*includeTail=*/ true));
 	}
 }

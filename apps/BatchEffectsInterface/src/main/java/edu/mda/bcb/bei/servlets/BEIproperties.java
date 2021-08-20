@@ -61,6 +61,7 @@ public class BEIproperties extends BEIServletMixin
 	@Override
 	protected void internalProcess(HttpServletRequest request, StringBuffer theBuffer) throws Exception
 	{
+		// return to user handled in parent
 		long start = System.currentTimeMillis();
 		theBuffer.append(getResponseString(this));
 		long finish = System.currentTimeMillis();

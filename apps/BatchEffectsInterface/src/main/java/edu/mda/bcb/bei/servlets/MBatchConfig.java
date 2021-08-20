@@ -11,6 +11,7 @@
 
 package edu.mda.bcb.bei.servlets;
 
+import edu.mda.bcb.bei.status.JobStatus;
 import edu.mda.bcb.bei.utils.BEIUtils;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -44,8 +45,10 @@ public class MBatchConfig extends BEIServletMixin
 	@Override
 	protected void internalProcess(HttpServletRequest request, StringBuffer theBuffer) throws Exception
 	{
+		// return to user handled in parent
 		String jobId = request.getParameter("jobId");
 		log("passed in jobId is " + jobId);
+		JobStatus.checkJobId(jobId);
 		String action = request.getParameter("action");
 		log("passed in action is " + action);
 		// action options

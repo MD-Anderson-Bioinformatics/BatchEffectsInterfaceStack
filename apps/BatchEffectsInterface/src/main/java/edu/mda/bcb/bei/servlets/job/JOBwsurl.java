@@ -14,6 +14,7 @@ package edu.mda.bcb.bei.servlets.job;
 import edu.mda.bcb.bei.utils.BEIUtils;
 import edu.mda.bcb.bei.servlets.BEIServletMixin;
 import edu.mda.bcb.bei.servlets.BEIproperties;
+import edu.mda.bcb.bei.status.JobStatus;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,6 +43,7 @@ public class JOBwsurl extends BEIServletMixin
 	{
 		String jobId = request.getParameter("jobId");
 		log("passed in jobId is " + jobId);
+		JobStatus.checkJobId(jobId);
 		theBuffer.append(getURL(jobId, this, request.getScheme()));
 	}
 
