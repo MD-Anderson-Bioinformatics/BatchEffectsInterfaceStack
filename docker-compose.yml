@@ -1,7 +1,7 @@
 # this is the docker-compose version
 version: '3.0'
 
-# file version 2021-08-13-1100
+# file version 2021-10-14-0919
 
 
 networks:
@@ -23,7 +23,7 @@ services:
             context: .
             dockerfile: Dockerfile
         container_name: bei_cont_hub
-        image: mdabcb/bei_bei_image:2021-08-13-1100
+        image: mdabcb/bei_bei_image:2021-10-14-0919
         volumes:
             # external:internal
             # file with properties and job list for this installation
@@ -53,7 +53,7 @@ services:
             context: .
             dockerfile: Dockerfile
         container_name: mbatch_cont_hub
-        image: mdabcb/bei_mbatch_image:2021-08-13-1100
+        image: mdabcb/bei_mbatch_image:2021-10-14-0919
         volumes:
             # directory for output from BEI, GDCDownload, and MBatch Results external:internal
             - /BEI/OUTPUT:/BEI/OUTPUT
@@ -70,7 +70,7 @@ services:
     gdcService:
         container_name: gdc_cont_hub
         # update :latest to desired version
-        image: mdabcb/bei_gdc_image:2021-08-13-1100
+        image: mdabcb/bei_gdc_image:2021-10-14-0919
         # restart this container if it crashes
         restart: always
         build:
@@ -103,7 +103,7 @@ services:
             dockerfile: Dockerfile
         container_name: bev_cont_hub
         # update :latest to desired version
-        image: mdabcb/bei_bev_image:2021-08-13-1100
+        image: mdabcb/bei_bev_image:2021-10-14-0919
         volumes:
             # external:internal
             # directory for dap.properties
