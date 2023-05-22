@@ -1,4 +1,4 @@
-// Copyright (c) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 University of Texas MD Anderson Cancer Center
+// Copyright (c) 2011-2022 University of Texas MD Anderson Cancer Center
 //
 // This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
 //
@@ -14,6 +14,7 @@ package edu.mda.bcb.bei.servlets.job;
 import edu.mda.bcb.bei.utils.BEIUtils;
 import edu.mda.bcb.bei.servlets.BEIServletMixin;
 import edu.mda.bcb.bei.status.JobStatus;
+import edu.mda.bcb.bei.utils.ScanCheck;
 import java.io.File;
 import java.io.IOException;
 import javax.servlet.annotation.WebServlet;
@@ -39,6 +40,7 @@ public class JOBdelete extends BEIServletMixin
 	protected void internalProcess(HttpServletRequest request, StringBuffer theBuffer) throws Exception
 	{
 		String jobId = request.getParameter("jobId");
+		ScanCheck.checkForMetaCharacters(jobId);
 		log("passed in jobId is " + jobId);
 		JobStatus.checkJobId(jobId);
 		if ((jobId!=null)&&!("".equals(jobId)))

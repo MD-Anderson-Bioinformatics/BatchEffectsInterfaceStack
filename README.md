@@ -34,11 +34,11 @@ Permissions or ownership of the directories may need to be changed or matched to
 
 In the directory with the docker-compose.yml file run:
 
-    docker-compose -p beihub -f docker-compose.yml up --no-build -d
+    docker compose -p beihub -f docker-compose.yml up --no-build -d
 
 You can stop it with:
 
-    docker-compose -p beihub -f docker-compose.yml down
+    docker compose -p beihub -f docker-compose.yml down
 
 To connect to the MBatch Omic Browser with:
 
