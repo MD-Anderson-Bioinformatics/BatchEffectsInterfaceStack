@@ -15,8 +15,8 @@ import edu.mda.bcb.bei.servlets.BEIServletMixin;
 import edu.mda.bcb.bei.status.JOB_STATUS;
 import edu.mda.bcb.bei.status.JobStatus;
 import edu.mda.bcb.bei.utils.ScanCheck;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  *

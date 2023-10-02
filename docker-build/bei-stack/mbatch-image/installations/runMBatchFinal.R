@@ -34,9 +34,9 @@ for( myStr in commandArgs() )
 }
 
 # update for new output paths (Added analysis directory)
-successFile <- file.path("/BEI/OUTPUT", jobID, "ZIP-RESULTS", "analysis", "MBATCH_SUCCESS.txt")
-completedFile <- file.path("/BEI/OUTPUT", jobID, "ZIP-RESULTS", "analysis", "MBATCH_COMPLETED.txt")
-failFile <- file.path("/BEI/OUTPUT", jobID, "ZIP-RESULTS", "analysis", "MBATCH_FAILED.txt")
+successFile <- file.path("/BEA/BEI/OUTPUT", jobID, "ZIP-RESULTS", "analysis", "MBATCH_SUCCESS.txt")
+completedFile <- file.path("/BEA/BEI/OUTPUT", jobID, "ZIP-RESULTS", "analysis", "MBATCH_COMPLETED.txt")
+failFile <- file.path("/BEA/BEI/OUTPUT", jobID, "ZIP-RESULTS", "analysis", "MBATCH_FAILED.txt")
 runStatus <- "success"
 tryCatch({
 	if (file.exists(successFile))

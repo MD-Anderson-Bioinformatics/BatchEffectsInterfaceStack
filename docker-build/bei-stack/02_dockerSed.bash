@@ -43,13 +43,13 @@ fi
 # local paths point to local setup for DVLP, STAG, or PROD
 LOCAL_PATH_ENV=${8}
 ### file with properties and job list for this installation
-PROP_DIR=${LOCAL_PATH_ENV}/PROPS
+PROP_DIR=${LOCAL_PATH_ENV}/BEI/PROPS
 ### directory for output from BEI and MBatch Results
-JOB_OUTPUT_DIR=${LOCAL_PATH_ENV}/OUTPUT
+JOB_OUTPUT_DIR=${LOCAL_PATH_ENV}/BEI/OUTPUT
 ### directory for the Batch Effects Website
-WEBSITE_DIR=${LOCAL_PATH_ENV}/WEBSITE
+WEBSITE_DIR=${LOCAL_PATH_ENV}/BEI/WEBSITE
 ### read-only directory for util files
-UTIL_DIR=${LOCAL_PATH_ENV}/UTIL
+UTIL_DIR=${LOCAL_PATH_ENV}/BEI/UTIL
 
 # URL and tag to use as image name for BEI image, such as mdabcb/bei_image:DAP_BEA_VERSION_TIMESTAMP
 BEI_IMAGEURL=${9}
@@ -81,6 +81,7 @@ echo "BEI arguments"
 echo "BASE_DIR=${BASE_DIR}"
 echo "RELEASE=${RELEASE}"
 echo "USER_ID=${USER_ID}"
+echo "GROUP_ID=${GROUP_ID}"
 echo "BEI_PORT=${BEI_PORT}"
 echo "BEV_PORT=${BEV_PORT}"
 echo "SUBNET=${SUBNET}"

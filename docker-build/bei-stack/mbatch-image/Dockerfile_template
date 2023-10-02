@@ -1,4 +1,4 @@
-FROM mdabcb/mbatchsa_image:BEA_VERSION_TIMESTAMP
+FROM mdabcb/mbatchsa_image:HUB_BEA_VERSION_TIMESTAMP
 # CI/CD replaces above with local repo image
 
 # reminder, use {} around environmental variables, otherwise docker uses it as a literal
@@ -13,19 +13,16 @@ LABEL edu.mda.bcb.name="Batch Effects Interface: MBatch" \
 
 # create and setup beiuser use to external directory owner
 # also, set permissions and ownerships on internal docker directories
-RUN useradd -l -s /bin/bash -d /home/beiuser -u <USERID> beiuser && \
-    chown -R beiuser:beiuser /home/beiuser
+# group already exists groupadd -g <GROUPID> beigroup && \
+RUN useradd -l -s /bin/bash -d /home/beiuser -u <USERID> -g <GROUPID> beiuser && \
+    chown -R beiuser:bcbgroup /home/beiuser && \
+    chmod -R 777 /home/beiuser
 
 # make subdirectory in user home for running
-# COPY is always done as root!!!!
 RUN mkdir /home/beiuser/mbatch && \
-    chown -R beiuser:beiuser /home/beiuser/mbatch && \
+    chown -R beiuser:bcbgroup /home/beiuser/mbatch && \
     chmod -R u+rwx /home/beiuser/mbatch
-COPY installations /home/beiuser/mbatch
-
-RUN chown -R beiuser:beiuser /home/beiuser && \
-    chmod -R u+rwx /home/beiuser && \
-    ls -l /home/beiuser/mbatch
+COPY --chown=beiuser:bcbgroup --chmod=775 installations /home/beiuser/mbatch
 
 # switch from root to beiuser user
 USER beiuser
