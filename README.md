@@ -19,12 +19,12 @@ Make the following directories.
  - /BEI/PROPS
  - /BEI/UTIL
  - /BEI/WEBSITE
- - /BEI/MW_CONFIG
+ - /BEI/MW_CACHE
  - /BEI/MW_ZIP
 
 Then copy directory contents.
 
- 1. Copy the contents of inst/ext/MW_CONFIG into /BEI/MW_CONFIG.
+ 1. Copy the contents of inst/ext/MW_CACHE into /BEI/MW_CACHE.
  2. Copy the contents of inst/ext/OUTPUT into /BEI/OUTPUT.
  3. Copy the contents of inst/ext/PROPS into /BEI/PROPS.
  4. Copy the contents of inst/ext/UTIL into /BEI/UTIL.

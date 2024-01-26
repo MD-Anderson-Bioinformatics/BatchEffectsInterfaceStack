@@ -49,7 +49,7 @@ JOB_OUTPUT_DIR=${LOCAL_PATH_ENV}/BEI/OUTPUT
 ### directory for the Batch Effects Website
 WEBSITE_DIR=${LOCAL_PATH_ENV}/BEI/WEBSITE
 ### read-only directory for util files
-UTIL_DIR=${LOCAL_PATH_ENV}/BEI/UTIL
+UTIL_DIR=${LOCAL_PATH_ENV}/BEI/UTILS
 
 # URL and tag to use as image name for BEI image, such as mdabcb/bei_image:DAP_BEA_VERSION_TIMESTAMP
 BEI_IMAGEURL=${9}
