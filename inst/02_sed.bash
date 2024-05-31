@@ -5,7 +5,6 @@ echo "BEA_VERSION_TIMESTAMP"
 
 BASEDIR="<REPLACE>"
 DESIREDTAG="BEI_<REPLACE>"
-SUBNET="<REPLACE>"
 SERVER_TITLE="<REPLACE>"
 
 USER_ID="2002"
@@ -56,6 +55,6 @@ echo "docker-compose_template.yml"
 if [ -e ${BASEDIR}/build/bei-stack/docker-compose.yml ]; then
 	 rm ${BASEDIR}/build/bei-stack/docker-compose.yml
 fi
-sed -e "s|<BEV-PORT>|${BEV_PORT}|g" -e "s|<BEI-PORT>|${BEI_PORT}|g" -e "s|<SUBNET>|${SUBNET}|g" -e "s|<ENVIRON>|${ENVIRON}|g" -e "s|<BEI-IMAGETXT>|${BEI_IMAGETXT}|g" -e "s|<BEI-DESIREDTAG>|${BEI_DESIREDTAG}|g" -e "s|<GDC-DESIREDTAG>|${GDC_DESIREDTAG}|g" -e "s|<MBATCH-IMAGETXT>|${MBATCH_IMAGETXT}|g" -e "s|<MBATCH-DESIREDTAG>|${MBATCH_DESIREDTAG}|g" -e "s|<BEV-IMAGETXT>|${BEV_IMAGETXT}|g" -e "s|<BEV-DESIREDTAG>|${BEV_DESIREDTAG}|g" -e "s|<PROP-DIR>|${PROP_DIR}|g" -e "s|<JOB-OUTPUT-DIR>|${JOB_OUTPUT_DIR}|g" -e "s|<WEBSITE-DIR>|${WEBSITE_DIR}|g" -e "s|<UTIL-DIR>|${UTIL_DIR}|g" ${BASEDIR}/build/bei-stack/docker-compose_template.yml > ${BASEDIR}/build/bei-stack/docker-compose.yml
+sed -e "s|<BEV-PORT>|${BEV_PORT}|g" -e "s|<BEI-PORT>|${BEI_PORT}|g" -e "s|<ENVIRON>|${ENVIRON}|g" -e "s|<BEI-IMAGETXT>|${BEI_IMAGETXT}|g" -e "s|<BEI-DESIREDTAG>|${BEI_DESIREDTAG}|g" -e "s|<GDC-DESIREDTAG>|${GDC_DESIREDTAG}|g" -e "s|<MBATCH-IMAGETXT>|${MBATCH_IMAGETXT}|g" -e "s|<MBATCH-DESIREDTAG>|${MBATCH_DESIREDTAG}|g" -e "s|<BEV-IMAGETXT>|${BEV_IMAGETXT}|g" -e "s|<BEV-DESIREDTAG>|${BEV_DESIREDTAG}|g" -e "s|<PROP-DIR>|${PROP_DIR}|g" -e "s|<JOB-OUTPUT-DIR>|${JOB_OUTPUT_DIR}|g" -e "s|<WEBSITE-DIR>|${WEBSITE_DIR}|g" -e "s|<UTIL-DIR>|${UTIL_DIR}|g" ${BASEDIR}/build/bei-stack/docker-compose_template.yml > ${BASEDIR}/build/bei-stack/docker-compose.yml
 
 echo "finish sedFiles"

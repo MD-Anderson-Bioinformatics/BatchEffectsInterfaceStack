@@ -1,16 +1,13 @@
 # this is the docker compose version
 version: '3.0'
 
-# file version 2024-01-26-1200
+# file version 2024-05-29-1000
 
 
 networks:
     # network for this compose stack
     bei_network_hub:
         driver: bridge
-#SUBNET        ipam:
-#SUBNET            config:
-#SUBNET            - subnet: 0
 services:
     # beiService runs tomcat with Batch Effects Interface
     beiService:
@@ -23,7 +20,7 @@ services:
             context: ./bei-image
             dockerfile: Dockerfile
         container_name: bei_cont_hub
-        image: mdabcb/bei_image:2024-01-26-1200
+        image: mdabcb/bei_image:2024-05-29-1000
         volumes:
             # external:internal
             # external log path
@@ -55,7 +52,7 @@ services:
             context: ./mbatch-image
             dockerfile: Dockerfile
         container_name: mbatch_cont_hub
-        image: mdabcb/mbatch_image:2024-01-26-1200
+        image: mdabcb/mbatch_image:2024-05-29-1000
         volumes:
             # directory for output from BEI, GDCDownload, and MBatch Results external:internal
             - /BEI/BEI/OUTPUT:/BEA/BEI/OUTPUT
@@ -80,7 +77,7 @@ services:
             dockerfile: Dockerfile
         container_name: bev_cont_hub
         # update :latest to desired version
-        image: mdabcb/bev_image:2024-01-26-1200
+        image: mdabcb/bev_image:2024-05-29-1000
         volumes:
             # external:internal
             # external log path

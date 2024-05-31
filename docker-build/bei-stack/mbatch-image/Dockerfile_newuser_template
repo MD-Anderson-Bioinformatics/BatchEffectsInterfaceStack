@@ -1,0 +1,24 @@
+FROM <IMAGEURL>
+
+LABEL edu.mda.bcb.uid="<LOCALUID>"
+
+####
+#### change bcbuser to new user id
+####
+
+USER root
+RUN usermod -u <LOCALUID> beiuser && \
+    chown <LOCALUID> /BEA && \
+    find /home -user <USERID> -exec chown <LOCALUID> {} \;
+
+####
+#### End of build steps
+####
+
+# switch from root to beiuser user
+USER beiuser
+
+# set working directory for future commands
+WORKDIR /home/beiuser/mbatch
+CMD /home/beiuser/mbatch/runRproc.bash http://beiService:8080/
+
